@@ -11,21 +11,84 @@ StereoCalib::StereoCalib(){
     this->_distCoeffR = (cv::Mat_<double>(14, 1) << -2.6721696588327870e-01, -8.3468659122720301e-01, 0., 0., 0.,
        0., 0., 1.7520486841753984e+00, 0., 0., 0., 0., 0., 0. );
 
-    this->_R = (cv::Mat_<double>(3, 3) << 9.8899670668229323e-01, 9.7661253251007288e-02,
-       -1.1112062718064832e-01, -9.6653933163027464e-02,
-       9.9521345350888979e-01, 1.4429108046789707e-02,
-       1.1199790790767049e-01, -3.5300946660859339e-03,
-       9.9370217221054391e-01 );
+    // this->_R = (cv::Mat_<double>(3, 3) << 9.8899670668229323e-01, 9.7661253251007288e-02,
+    //    -1.1112062718064832e-01, -9.6653933163027464e-02,
+    //    9.9521345350888979e-01, 1.4429108046789707e-02,
+    //    1.1199790790767049e-01, -3.5300946660859339e-03,
+    //    9.9370217221054391e-01 );
 
-    this->_T = (cv::Mat_<double>(3, 1) << 6.7222911495930981e+00, -3.5220917208478736e-01,
-       2.4511341222549290e-01 );
+    // this->_T = (cv::Mat_<double>(3, 1) << 6.7222911495930981e+00, -3.5220917208478736e-01,
+    //    2.4511341222549290e-01 );
 
     this->_imageSize = cv::Size(1920, 1080);
 
 }
 
-void StereoCalib::stereoCalibrate(){
+void StereoCalib::stereoCalibrate(const std::vector<cv::Mat>& imgLList, const std::vector<cv::Mat>& imgRList){
 
+    cv::Size patternSize(7, 6);
+    cv::Size squareSize(25, 25); // mm 
+
+    std::vector<std::vector<cv::Point2f>> imagePointsL;
+    std::vector<std::vector<cv::Point2f>> imagePointsR;
+    std::vector<std::vector<cv::Point3f>> objectPoints;
+
+    int imgNum = imgLList.size();
+    for(int i = 0; i < imgNum; i++){
+        cv::Mat imgL = imgLList[i];
+        cv::Mat imgR = imgRList[i];
+
+        cv::Mat grayImgL, grayImgR;
+        cv::cvtColor(imgL, grayImgL, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(imgR, grayImgR, cv::COLOR_BGR2GRAY);
+
+        bool foundL, foundR;
+        std::vector<cv::Point2f> cornerL, cornerR;
+        foundL = cv::findChessboardCorners(grayImgL, patternSize, cornerL, cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
+        foundR = cv::findChessboardCorners(grayImgR, patternSize, cornerR, cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
+        if(foundL && foundR){
+            cv::cornerSubPix(grayImgL, cornerL, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
+            cv::cornerSubPix(grayImgR, cornerR, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
+            imagePointsL.push_back(cornerL);
+            imagePointsR.push_back(cornerR);
+
+            std::cout << "The image  " << i << "  is good" << std::endl;
+
+            // draw
+            cv::Mat showImgL_chessboard, showImgR_chessboard;
+            showImgL_chessboard = imgL.clone();
+            showImgR_chessboard = imgR.clone();
+            cv::drawChessboardCorners(showImgL_chessboard, patternSize, cornerL, foundL);
+            cv::drawChessboardCorners(showImgR_chessboard, patternSize, cornerR, foundR);
+            cv::imwrite("./temp/showImgL_chessboard.jpg", showImgL_chessboard);
+            cv::imwrite("./temp/showImgR_chessboard.jpg", showImgR_chessboard);
+        }else{
+            std::cout << "The image is bad please try again" << std::endl;
+        }
+    }
+    
+    // objectPoints
+    for(int i = 0; i < imgNum; i++){
+        std::vector<cv::Point3f> corners;
+        for(int row = 0; row < patternSize.height; row++){
+            for(int col = 0; col < patternSize.width; col++){
+                corners.push_back(cv::Point3f(col * squareSize.width, row * squareSize.height, 0.0f));
+            }
+        }
+        objectPoints.push_back(corners);
+    }
+
+    std::cout << "Start stereoCalibrate..." << std::endl;
+
+    double err = cv::stereoCalibrate(objectPoints, imagePointsL, imagePointsR,
+                                    this->_cameraMatrixL, this->_distCoeffL,
+                                    this->_cameraMatrixR, this->_distCoeffR,
+                                    this->_imageSize,
+                                    this->_R, this->_T, this->_E, this->_F,
+                                    cv::CALIB_USE_INTRINSIC_GUESS,
+                                    cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 1e-6));
+
+    std::cout << "The err = " << err << std::endl;
 }
 
 void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectifyImageL, cv::Mat& rectifyImageR){
