@@ -1,3 +1,4 @@
+#include <opencv2/ximgproc.hpp>
 #include "StereoCalib.h"
 
 StereoCalib::StereoCalib(){
@@ -11,20 +12,20 @@ StereoCalib::StereoCalib(){
     this->_distCoeffR = (cv::Mat_<double>(14, 1) << -2.6721696588327870e-01, -8.3468659122720301e-01, 0., 0., 0.,
        0., 0., 1.7520486841753984e+00, 0., 0., 0., 0., 0., 0. );
 
-    // this->_R = (cv::Mat_<double>(3, 3) << 9.8899670668229323e-01, 9.7661253251007288e-02,
-    //    -1.1112062718064832e-01, -9.6653933163027464e-02,
-    //    9.9521345350888979e-01, 1.4429108046789707e-02,
-    //    1.1199790790767049e-01, -3.5300946660859339e-03,
-    //    9.9370217221054391e-01 );
+    this->_R = (cv::Mat_<double>(3, 3) << 9.8899670668229323e-01, 9.7661253251007288e-02,
+       -1.1112062718064832e-01, -9.6653933163027464e-02,
+       9.9521345350888979e-01, 1.4429108046789707e-02,
+       1.1199790790767049e-01, -3.5300946660859339e-03,
+       9.9370217221054391e-01 );
 
-    // this->_T = (cv::Mat_<double>(3, 1) << 6.7222911495930981e+00, -3.5220917208478736e-01,
-    //    2.4511341222549290e-01 );
+    this->_T = (cv::Mat_<double>(3, 1) << 6.7222911495930981e+00, -3.5220917208478736e-01,
+       2.4511341222549290e-01 );
 
     this->_imageSize = cv::Size(1920, 1080);
 
 }
 
-void StereoCalib::stereoCalibrate(const std::vector<cv::Mat>& imgLList, const std::vector<cv::Mat>& imgRList){
+void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, const std::vector<std::string>& imgRPathList){
 
     cv::Size patternSize(7, 6);
     cv::Size squareSize(25, 25); // mm 
@@ -33,10 +34,14 @@ void StereoCalib::stereoCalibrate(const std::vector<cv::Mat>& imgLList, const st
     std::vector<std::vector<cv::Point2f>> imagePointsR;
     std::vector<std::vector<cv::Point3f>> objectPoints;
 
-    int imgNum = imgLList.size();
+    int imgNum = imgLPathList.size();
+    int success = 0;
     for(int i = 0; i < imgNum; i++){
-        cv::Mat imgL = imgLList[i];
-        cv::Mat imgR = imgRList[i];
+        std::string imgLPath = imgLPathList[i];
+        std::string imgRPath = imgRPathList[i];
+
+        cv::Mat imgL = cv::imread(imgLPath);
+        cv::Mat imgR = cv::imread(imgRPath);
 
         cv::Mat grayImgL, grayImgR;
         cv::cvtColor(imgL, grayImgL, cv::COLOR_BGR2GRAY);
@@ -51,6 +56,8 @@ void StereoCalib::stereoCalibrate(const std::vector<cv::Mat>& imgLList, const st
             cv::cornerSubPix(grayImgR, cornerR, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
             imagePointsL.push_back(cornerL);
             imagePointsR.push_back(cornerR);
+
+            success += 1;
 
             std::cout << "The image  " << i << "  is good" << std::endl;
 
@@ -68,7 +75,7 @@ void StereoCalib::stereoCalibrate(const std::vector<cv::Mat>& imgLList, const st
     }
     
     // objectPoints
-    for(int i = 0; i < imgNum; i++){
+    for(int i = 0; i < success; i++){
         std::vector<cv::Point3f> corners;
         for(int row = 0; row < patternSize.height; row++){
             for(int col = 0; col < patternSize.width; col++){
@@ -127,28 +134,51 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
 }
 
 void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, cv::Mat& disparity){
-    int minDisparity = 32;
-    int numDisparities = 176;
-    int blockSize = 16;
-    int P1 = 4 * 1 * blockSize * blockSize;
+    int minDisparity = 2;
+    int numDisparities = 128;
+    int blockSize = 3;
+    int P1 = 8 * 1 * blockSize * blockSize;
     int P2 = 32 * 1 * blockSize * blockSize;
-    int disp12MaxDiff = 1;
-    int preFilterCap = 60;
-    int uniquenessRatio = 30;
-    int speckleWindowSize  = 200;
-    int speckleRange = 2;
+    int disp12MaxDiff = 5;
+    int preFilterCap = 63;
+    int uniquenessRatio = 10;
+    int speckleWindowSize  = 100;
+    int speckleRange = 32;
+    int mode = cv::StereoSGBM::MODE_SGBM_3WAY;
 
-    cv::Ptr<cv::StereoSGBM> sgbm = cv::StereoSGBM::create(minDisparity, numDisparities, blockSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio, speckleWindowSize, speckleRange);
+    cv::Ptr<cv::StereoSGBM> sgbmL = cv::StereoSGBM::create(minDisparity, numDisparities, blockSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio, speckleWindowSize, speckleRange, mode);
+    cv::Ptr<cv::StereoMatcher> sgbmR = cv::ximgproc::createRightMatcher(sgbmL);
 
     //! rectifyImageL, rectifyImageR 8-bit single-channel image.
     // cv::Mat disparity;
-    sgbm->compute(rectifyImageL, rectifyImageR, disparity);
+    cv::Mat disparityL, disparityR;
+    sgbmL->compute(rectifyImageL, rectifyImageR, disparityL);
+    sgbmR->compute(rectifyImageR, rectifyImageL, disparityR);
 
-    cv::Mat disparity8U;
-    disparity.convertTo(disparity8U, CV_32F, 1/16.0);
-    cv::normalize(disparity8U, disparity8U, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
-    cv::medianBlur(disparity8U,disparity8U, 9);
-    
-    cv::imwrite("./temp/disparity8U.jpg", disparity8U);
-    
+    //! WLS Filter 
+    double lmbda = 80000;
+    double sigma = 1.8;
+    cv::Ptr<cv::ximgproc::DisparityWLSFilter> wlsFilter = cv::ximgproc::createDisparityWLSFilter(sgbmL);
+    wlsFilter->setLambda(lmbda);
+    wlsFilter->setSigmaColor(sigma);
+
+    cv::Mat filteredDisparityMap;
+    cv::Mat filteredDisparityColorMap;
+    wlsFilter->filter(disparityL, rectifyImageL, filteredDisparityMap, disparityR);
+    filteredDisparityMap.convertTo(filteredDisparityMap, CV_32F, 1/16.0);
+    cv::normalize(filteredDisparityMap, filteredDisparityMap, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
+    cv::medianBlur(filteredDisparityMap,filteredDisparityMap, 9);
+    cv::applyColorMap(filteredDisparityMap, filteredDisparityColorMap, cv::COLORMAP_HOT);
+    cv::imwrite("./temp/filteredDisparityMap.jpg", filteredDisparityMap);
+    cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
+
+    cv::Mat disparity8UL, disparity8UR;
+    disparityL.convertTo(disparity8UL, CV_32F, 1/16.0);
+    cv::normalize(disparity8UL, disparity8UL, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
+    cv::medianBlur(disparity8UL,disparity8UL, 9);
+    cv::imwrite("./temp/disparity8UL.jpg", disparity8UL);
+
+    cv::Mat point3DMat;
+    cv::reprojectImageTo3D(disparity8UL, point3DMat, this->_Q, true);
+    point3DMat.convertTo(point3DMat, CV_32F, 16.0);
 }

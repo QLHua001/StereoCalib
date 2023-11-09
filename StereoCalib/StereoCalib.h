@@ -7,7 +7,7 @@ class StereoCalib{
 public:
     StereoCalib();
 
-    void stereoCalibrate(const std::vector<cv::Mat>& imgLList, const std::vector<cv::Mat>& imgRList);
+    void stereoCalibrate(const std::vector<std::string>& imgLPathList, const std::vector<std::string>& imgRPathList);
     void stereoRectify(const cv::Mat imageL, const cv::Mat imageR, cv::Mat& rectifyImageL, cv::Mat& rectifyImageR);
     void stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, cv::Mat& disparity);
 

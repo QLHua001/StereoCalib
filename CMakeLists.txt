@@ -22,7 +22,7 @@ elseif(CMAKE_HOST_UNIX)
         message(FATAL_ERROR "OpenMP Not Found!")
     endif ()
 
-    set(OpenCV_DIR "/QMy-File2/QPackage/opencv-4.8.0/output_host_ubuntu2004/")
+    set(OpenCV_DIR "/QMy-File2/QPackage/opencv-4.8.0/output_host_ubuntu2004_contrib/")
     include_directories(${OpenCV_DIR}/include/opencv4/)
     link_directories(${OpenCV_DIR}/lib/)
     set(OpenCV_LIBS libopencv_world.so.4.8.0)
