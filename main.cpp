@@ -108,8 +108,9 @@ void test_StereoCalib(){
     cv::imwrite("./temp/rectifyImageL.jpg", rectifyImageL);
     cv::imwrite("./temp/rectifyImageR.jpg", rectifyImageR);
 
-    cv::Mat disparity;
-    stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, disparity);
+    cv::Mat filteredDisparityColorMap;
+    cv::Mat xyz;
+    stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, filteredDisparityColorMap, xyz);
 
     delete AiDMSMTFace;
     delete AiDMSMTYolox;

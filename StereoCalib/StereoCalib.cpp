@@ -30,8 +30,8 @@ StereoCalib::StereoCalib(){
 
 void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, const std::vector<std::string>& imgRPathList){
 
-    cv::Size patternSize(7, 6);
-    cv::Size squareSize(25, 25); // mm 
+    cv::Size patternSize(8, 5);
+    cv::Size squareSize(30, 30); // mm 
 
     std::vector<std::vector<cv::Point2f>> imagePointsL;
     std::vector<std::vector<cv::Point2f>> imagePointsR;
@@ -97,6 +97,13 @@ void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, 
                                     this->_R, this->_T, this->_E, this->_F,
                                     cv::CALIB_USE_INTRINSIC_GUESS,
                                     cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 1e-6));
+    std::cout << "ML: " << std::endl << this->_cameraMatrixL << std::endl;
+    std::cout << "DL: " << std::endl << this->_distCoeffL << std::endl;
+    std::cout << "MR: " << std::endl << this->_cameraMatrixR << std::endl;
+    std::cout << "DR: " << std::endl << this->_distCoeffR << std::endl;
+    std::cout << "R: " << std::endl << this->_R << std::endl;
+    std::cout << "T: " << std::endl << this->_T << std::endl;
+
 
     std::cout << "The err = " << err << std::endl;
 }
@@ -114,6 +121,11 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
                     cv::CALIB_ZERO_DISPARITY,
                     0,
                     this->_imageSize);
+    std::cout << "R1: " << std::endl << R1 << std::endl;
+    std::cout << "R2: " << std::endl << R1 << std::endl;
+    std::cout << "P1: " << std::endl << R1 << std::endl;
+    std::cout << "P2: " << std::endl << R1 << std::endl;
+    std::cout << "Q: " << std::endl << this->_Q << std::endl;
     
     cv::Mat mapXL, mapYL;
     cv::Mat mapXR, mapYR;
@@ -136,7 +148,7 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
     cv::imwrite("./temp/showRectifyImg.jpg", showRectifyImg);
 }
 
-void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, cv::Mat& disparity){
+void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, cv::Mat& filteredDisparityColorMap, cv::Mat& xyz){
     int minDisparity = 2;
     int numDisparities = 128;
     int blockSize = 3;
@@ -166,22 +178,53 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
     wlsFilter->setSigmaColor(sigma);
 
     cv::Mat filteredDisparityMap;
-    cv::Mat filteredDisparityColorMap;
+    // cv::Mat filteredDisparityColorMap;
     wlsFilter->filter(disparityL, rectifyImageL, filteredDisparityMap, disparityR);
     filteredDisparityMap.convertTo(filteredDisparityMap, CV_32F, 1/16.0);
     cv::normalize(filteredDisparityMap, filteredDisparityMap, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
     cv::medianBlur(filteredDisparityMap,filteredDisparityMap, 9);
-    cv::applyColorMap(filteredDisparityMap, filteredDisparityColorMap, cv::COLORMAP_HOT);
+    cv::applyColorMap(filteredDisparityMap, filteredDisparityColorMap, cv::COLORMAP_OCEAN);
     cv::imwrite("./temp/filteredDisparityMap.jpg", filteredDisparityMap);
-    cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
+    // cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
 
     cv::Mat disparity8UL, disparity8UR;
     disparityL.convertTo(disparity8UL, CV_32F, 1/16.0);
     cv::normalize(disparity8UL, disparity8UL, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
     cv::medianBlur(disparity8UL,disparity8UL, 9);
-    cv::imwrite("./temp/disparity8UL.jpg", disparity8UL);
+    // cv::imwrite("./temp/disparity8UL.jpg", disparity8UL);
 
-    cv::Mat point3DMat;
-    cv::reprojectImageTo3D(disparity8UL, point3DMat, this->_Q, true);
-    point3DMat.convertTo(point3DMat, CV_32F, 16.0);
+    // cv::Mat point3DMat;
+    cv::reprojectImageTo3D(disparityL, xyz, this->_Q, true);
+    xyz.convertTo(xyz, CV_32F, 16.0);
+}
+
+void StereoCalib::calcStereoDist(double lx, double ly, double rx, double ry){
+    double x = 0;
+	double y = 0;
+	double z = 0;
+
+    cv::Mat c1 = this->_cameraMatrixL;
+    cv::Mat c2 = this->_cameraMatrixR;
+    cv::Mat r = this->_R;
+    cv::Mat t = this->_T;
+
+    double m1[9] = {c1.at<double>(0, 0), c1.at<double>(1, 0), c1.at<double>(2, 0), 
+                    c1.at<double>(0, 1), c1.at<double>(1, 1), c1.at<double>(2, 1), 
+                    c1.at<double>(0, 2), c1.at<double>(1, 2), c1.at<double>(2, 2)};
+    double m2[9] = {c2.at<double>(0, 0), c2.at<double>(1, 0), c2.at<double>(2, 0), 
+                    c2.at<double>(0, 1), c2.at<double>(1, 1), c2.at<double>(2, 1), 
+                    c2.at<double>(0, 2), c2.at<double>(1, 2), c2.at<double>(2, 2)};
+    double R[9] = { r.at<double>(0, 0), r.at<double>(1, 0), r.at<double>(2, 0), 
+                    r.at<double>(0, 1), r.at<double>(1, 1), r.at<double>(2, 1), 
+                    r.at<double>(0, 2), r.at<double>(1, 2), r.at<double>(2, 2)};
+    double T[3] = {t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0)};
+
+    double numerator = (m1[0] + m1[4]) / 2 * ((m2[0] + m2[4]) / 2 * T[0] - (rx - m2[6])*T[2]);
+	double denominator1 = (rx - m2[6])*(R[6] * (lx - m1[6]) + R[7] * (ly - m1[7]) + R[8] * (m1[0] + m1[4]) / 2);
+	double denominator2 = (m2[0] + m2[4]) / 2 * (R[0] * (lx - m1[6]) + R[1] * (ly - m1[7]) + R[2] * (m1[0] + m1[4]) / 2);
+	z = numerator / (denominator1 - denominator2);
+	x = z * (lx - m1[6]) / ((m1[0] + m1[4]) / 2);
+	y = z * (ly - m1[7]) / ((m1[0] + m1[4]) / 2);
+	
+	printf("该点世界坐标为 %f\t %f\t %f\n", x, y, z);
 }

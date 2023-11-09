@@ -10,7 +10,7 @@ public:
 
     void run();
     void calibrate();
-    void detectLandmark(const cv::Mat grayImgL);
+    void detectLandmark(const cv::Mat grayImgL, std::vector<cv::Point2f>& landmarks);
 
 private:
     void getCalibImgs(const std::string& imgRoot, std::vector<std::string>& imgLPathList, std::vector<std::string>& imgRPathList);
@@ -23,6 +23,7 @@ private:
 
     StereoCalib _stereoCalib;
 
-    std::vector<cv::Point2f> _landmarks;
+    std::vector<cv::Point2f> _landmarksL;
+    std::vector<cv::Point2f> _landmarksR;
 };
 

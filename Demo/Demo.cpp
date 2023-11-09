@@ -28,8 +28,8 @@ Demo::~Demo(){
 }
 
 void Demo::run(){
-    std::string imgLPath{"./example/calib_imgs/left1.jpg"};
-    std::string imgRPath{"./example/calib_imgs/right1.jpg"};
+    std::string imgLPath{"./example/calib_imgs_3/left38.jpg"};
+    std::string imgRPath{"./example/calib_imgs_3/left38.jpg"};
 
     cv::Mat imgL = cv::imread(imgLPath);
     if(imgL.empty()){
@@ -47,7 +47,8 @@ void Demo::run(){
     cv::cvtColor(imgL, grayImgL, cv::COLOR_BGR2GRAY);
     cv::cvtColor(imgR, grayImgR, cv::COLOR_BGR2GRAY);
 
-    this->detectLandmark(grayImgL);
+    this->detectLandmark(grayImgL, this->_landmarksL);
+    this->detectLandmark(grayImgR, this->_landmarksR);
 
     cv::Mat rectifyImageL;
     cv::Mat rectifyImageR;
@@ -55,13 +56,36 @@ void Demo::run(){
     cv::imwrite("./temp/rectifyImageL.jpg", rectifyImageL);
     cv::imwrite("./temp/rectifyImageR.jpg", rectifyImageR);
 
-    cv::Mat disparity;
-    this->_stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, disparity);
+    cv::Mat filteredDisparityColorMap;
+    cv::Mat xyz; //! CV_32FC3
+    this->_stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, filteredDisparityColorMap, xyz);
+    cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
+    std::cout << "xyz channels(): " << xyz.channels() << std::endl;
+    std::cout << "xyz type(): " << xyz.type() << std::endl;
+
+    //! print depth
+    for(int i = 0; i < this->_landmarksL.size(); i++){
+        cv::Point2f ptL = this->_landmarksL[i];
+        float x = xyz.at<cv::Vec3f>(int(ptL.y), int(ptL.x))[0];
+        float y = xyz.at<cv::Vec3f>(int(ptL.y), int(ptL.x))[1];
+        float z = xyz.at<cv::Vec3f>(int(ptL.y), int(ptL.x))[2];
+        std::cout << i << " [" << ptL.x << ", " << ptL.y << "]: " << x << ", " << y << ", " << z << std::endl;
+
+        cv::Point2f ptR = this->_landmarksR[i];
+        this->_stereoCalib.calcStereoDist(ptL.x, ptL.y, ptR.x, ptR.y);
+    }
+
+    for(int i = 0; i < this->_landmarksL.size(); i++){
+        cv::Point2f ptL = this->_landmarksL[i];
+        cv::Point2f ptR = this->_landmarksR[i];
+        printf("index: %d --- left: %.2f, %.2f, right: %.2f, %.2f\n", i, ptL.x, ptL.y, ptR.x, ptR.y);
+    }
+
 }
 
 void Demo::calibrate(){
 
-    std::string imgRoot{"./example/calib_imgs/"};
+    std::string imgRoot{"./example/calib_imgs_3/"};
 
     std::vector<std::string> imgLPathList, imgRPathList;
     this->getCalibImgs(imgRoot, imgLPathList, imgRPathList);
@@ -70,7 +94,7 @@ void Demo::calibrate(){
 
 }
 
-void Demo::detectLandmark(const cv::Mat grayImgL){
+void Demo::detectLandmark(const cv::Mat grayImgL, std::vector<cv::Point2f>& landmarks){
     cv::Mat gray888;
     cv::cvtColor(grayImgL, gray888, cv::COLOR_GRAY2BGR);
     cv::imwrite("./temp/gray888.jpg", gray888);
@@ -114,8 +138,9 @@ void Demo::detectLandmark(const cv::Mat grayImgL){
                 pt.y *= faceImgEx.rows;
                 pt.x += faceRoiEx.x;
                 pt.y += faceRoiEx.y;
-                this->_landmarks.push_back(pt);
+                landmarks.push_back(pt);
                 cv::circle(showImg, pt, 2, cv::Scalar(255, 255, 0), 1);
+                cv::putText(showImg, std::to_string(i).c_str(), cv::Point(pt.x, pt.y-5), cv::FONT_HERSHEY_COMPLEX, 0.8, cv::Scalar(0, 255, 0), 1);
             }
             break;
         }
