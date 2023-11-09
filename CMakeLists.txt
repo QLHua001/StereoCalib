@@ -35,11 +35,24 @@ elseif(CMAKE_HOST_UNIX)
 endif()
 
 include_directories(./)
+set(SRC_Demo
+    ./Demo/Demo.cpp)
+
 set(SRC_StereoCalib
     ./StereoCalib/StereoCalib.cpp)
 
+set(SRC_QNN
+    QNN/Predictor/Predictor.cpp
+    QNN/Predictor/PreProcessor.cpp
+    QNN/Predictor/NetNCNN.cpp
+    QNN/Predictor/PostDMSMTFace.cpp
+    QNN/Predictor/PostDMSMTYolox.cpp
+    QNN/AIDetector/AIDMSMTFace.cpp
+    QNN/AIDetector/AIDMSMTYolox.cpp)
+
+
 set(LIB_LIST ${OpenCV_LIBS} ${NCNN_LIBS})
-set(SRC_LIST main.cpp ${SRC_StereoCalib})
+set(SRC_LIST main.cpp ${SRC_Demo} ${SRC_StereoCalib} ${SRC_QNN})
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${LIB_LIST})

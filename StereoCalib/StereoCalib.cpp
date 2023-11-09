@@ -2,6 +2,9 @@
 #include "StereoCalib.h"
 
 StereoCalib::StereoCalib(){
+
+    std::cout << "new StereoCalib" << std::endl;
+
     this->_cameraMatrixL = (cv::Mat_<double>(3, 3) << 2.5585060339489064e+03, 0., 9.6072007512833954e+02, 0.,
        2.4165383474831133e+03, 5.4057064048399172e+02, 0., 0., 1. );
     this->_distCoeffL = (cv::Mat_<double>(14, 1) << -2.0161625732351765e-01, -2.2558706856770550e+00, 0., 0., 0.,

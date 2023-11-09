@@ -2,6 +2,10 @@
 #include <dirent.h>
 
 #include "StereoCalib/StereoCalib.h"
+#include "QNN/Predictor/DataTypeDMS.h"
+#include "QNN/AIDetector/AIDetector.h"
+
+#include "Demo/Demo.h"
 
 bool searchSpecifiedFiles(std::string folder, std::string extension, std::vector<std::string>& filePaths){
 
@@ -57,6 +61,12 @@ void test_StereoCalib(){
     std::string imgLPath{"./example/calib_imgs/left1.jpg"};
     std::string imgRPath{"./example/calib_imgs/right1.jpg"};
 
+    AIDetector* AiDMSMTYolox = new AIDMSMTYolox;
+    AiDMSMTYolox->init();
+
+    AIDetector* AiDMSMTFace = new AIDMSMTFace;
+    AiDMSMTFace->init();
+
     std::vector<std::string> imgLPathList, imgRPathList;
     getCalibImgs(imgRoot, imgLPathList, imgRPathList);
 
@@ -80,6 +90,18 @@ void test_StereoCalib(){
     cv::cvtColor(imgL, grayImgL, cv::COLOR_BGR2GRAY);
     cv::cvtColor(imgR, grayImgR, cv::COLOR_BGR2GRAY);
 
+    cv::Mat gray888;
+    cv::cvtColor(grayImgL, gray888, cv::COLOR_GRAY2BGR);
+    cv::imwrite("./temp/gray888.jpg", gray888);
+
+    Input DMSMTYoloxInput;
+    DMSMTYoloxInput.data = gray888.data;
+    DMSMTYoloxInput.width = gray888.cols;
+    DMSMTYoloxInput.height = gray888.rows;
+    DMSMTYoloxInput.format = ImgFormat::FMT_BGR888;
+    DMSMTYolox DMSMTYoloxOutput;
+    AiDMSMTYolox->run(&DMSMTYoloxInput, &DMSMTYoloxOutput);
+
     cv::Mat rectifyImageL;
     cv::Mat rectifyImageR;
     stereoCalib.stereoRectify(grayImgL, grayImgR, rectifyImageL, rectifyImageR);
@@ -88,12 +110,23 @@ void test_StereoCalib(){
 
     cv::Mat disparity;
     stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, disparity);
+
+    delete AiDMSMTFace;
+    delete AiDMSMTYolox;
+}
+
+void runDemo(){
+    Demo demo;
+
+    demo.run();
 }
 
 int main(int, char**){
     std::cout << "Hello, from StereoCalib!\n";
 
-    test_StereoCalib();
+    // test_StereoCalib();
+
+    runDemo();
 
     return 0;
 }
