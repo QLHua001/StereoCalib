@@ -48,12 +48,16 @@ static double getDistance(const cv::Point3f& p1, const cv::Point3f& p2){
 }
 
 void Demo::run(){
-    // std::string imgLPath{"./example/calib_imgs_4/left_7.jpg"};
-    // std::string imgRPath{"./example/calib_imgs_4/right_7.jpg"};
+    //return;
+    // std::string imgLPath{"./example/calib_imgs_6/left_17.jpg"};
+    // std::string imgRPath{"./example/calib_imgs_6/right_17.jpg"};
 
-    std::string videoL{"./example/calib_imgs_5_video/outputL1.mp4"};
-    std::string videoR{"./example/calib_imgs_5_video/outputR1.mp4"};
-    std::string outputPath{"./example/calib_imgs_5_video/result1m_test.mp4"};
+    // cv::Mat testImgL = cv::imread(imgLPath);
+    // cv::Mat testImgR = cv::imread(imgRPath);
+
+    std::string videoL{"./example/calib_imgs_5_video/outputL2.mp4"};
+    std::string videoR{"./example/calib_imgs_5_video/outputR2.mp4"};
+    std::string outputPath{"./example/calib_imgs_5_video/result2m_far.mp4"};
 
     cv::VideoCapture capL(videoL);
     if(!capL.isOpened()){
@@ -89,6 +93,9 @@ void Demo::run(){
 
         capL >> imgL;
         capR >> imgR;
+
+        // imgL = testImgL;
+        // imgR = testImgR;
         if(imgL.empty() || imgR.empty()) break;
 
         cv::Mat grayImgL, grayImgR;
@@ -160,11 +167,14 @@ void Demo::run(){
         sprintf(printStr, "right mouth depth: %.2f", worldPts[4].z);
         cv::putText(imgL, printStr, cv::Point(20, 700), cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(0, 255, 0), 2);
 
-        std::sort(worldPts.begin(), worldPts.end(), [](const cv::Point3f& p1, const cv::Point3f& p2){
-            return p1.z < p2.z;
-        });
-        double face_max_depth = worldPts[worldPts.size()-1].z - worldPts[0].z;
-        sprintf(printStr, "######face depth: %.2f", face_max_depth);
+        // std::sort(worldPts.begin(), worldPts.end(), [](const cv::Point3f& p1, const cv::Point3f& p2){
+        //     return p1.z < p2.z;
+        // });
+
+        double face_depth = ((worldPts[0].z + worldPts[1].z) / 2.0) - worldPts[2].z;
+
+        // double face_max_depth = worldPts[worldPts.size()-1].z - worldPts[0].z;
+        sprintf(printStr, "######face depth: %.2f", face_depth);
         cv::putText(imgL, printStr, cv::Point(20, 750), cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(0, 0, 255), 2);
 
         cv::Point2f p1, p2;
@@ -181,8 +191,10 @@ void Demo::run(){
         sprintf(printStr, "distance: %.2f", mouthDistance);
         cv::putText(imgL, printStr, cv::Point((p1.x+p2.x)/2, (p1.y+p2.y)/2-5), cv::FONT_HERSHEY_COMPLEX, 1.0, cv::Scalar(0, 255, 255), 2);
 
-        // cv::imwrite("./temp/imgL.jpg", imgL);
-        writer.write(imgL);
+        if(!outputPath.empty()){
+            // cv::imwrite("./temp/imgL.jpg", imgL);
+            writer.write(imgL);
+        }
         // //! print depth
         // for(int i = 0; i < this->_landmarksL.size(); i++){
         //     cv::Point2f ptL = this->_landmarksL[i];
@@ -210,7 +222,7 @@ void Demo::run(){
 
 void Demo::calibrate(){
 
-    std::string imgRoot{"./example/calib_imgs_5/"};
+    std::string imgRoot{"./example/calib_imgs_6/"};
 
     std::vector<std::string> imgLPathList, imgRPathList;
     this->getCalibImgs(imgRoot, imgLPathList, imgRPathList);
