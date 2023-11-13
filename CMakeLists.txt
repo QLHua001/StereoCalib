@@ -41,6 +41,9 @@ set(SRC_Demo
 set(SRC_StereoCalib
     ./StereoCalib/StereoCalib.cpp)
 
+set(SRC_QCamCalib
+    QCamCalib/QCamCalib.cpp)
+
 set(SRC_QNN
     QNN/Predictor/Predictor.cpp
     QNN/Predictor/PreProcessor.cpp
@@ -50,9 +53,13 @@ set(SRC_QNN
     QNN/AIDetector/AIDMSMTFace.cpp
     QNN/AIDetector/AIDMSMTYolox.cpp)
 
+set(SRC_Utils
+    monoCalib.cpp
+    stereoCalib.cpp)
+
 
 set(LIB_LIST ${OpenCV_LIBS} ${NCNN_LIBS})
-set(SRC_LIST main.cpp ${SRC_Demo} ${SRC_StereoCalib} ${SRC_QNN})
+set(SRC_LIST main.cpp ${SRC_Demo} ${SRC_StereoCalib} ${SRC_QCamCalib} ${SRC_QNN} ${SRC_Utils})
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${LIB_LIST})

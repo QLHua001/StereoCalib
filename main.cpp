@@ -108,9 +108,9 @@ void test_StereoCalib(){
     cv::imwrite("./temp/rectifyImageL.jpg", rectifyImageL);
     cv::imwrite("./temp/rectifyImageR.jpg", rectifyImageR);
 
-    cv::Mat filteredDisparityColorMap;
-    cv::Mat xyz;
-    stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, filteredDisparityColorMap, xyz);
+    // cv::Mat filteredDisparityColorMap;
+    // cv::Mat xyz;
+    // stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, filteredDisparityColorMap, xyz);
 
     delete AiDMSMTFace;
     delete AiDMSMTYolox;
@@ -122,12 +122,19 @@ void runDemo(){
     demo.run();
 }
 
+void test_monoCalib();
+void test_stereoCalib();
+
 int main(int, char**){
     std::cout << "Hello, from StereoCalib!\n";
 
     // test_StereoCalib();
 
     runDemo();
+
+    // test_monoCalib();
+
+    // test_stereoCalib();
 
     return 0;
 }
