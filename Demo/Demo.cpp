@@ -55,9 +55,9 @@ void Demo::run(){
     // cv::Mat testImgL = cv::imread(imgLPath);
     // cv::Mat testImgR = cv::imread(imgRPath);
 
-    std::string videoL{"./example/calib_imgs_5_video/outputL2.mp4"};
-    std::string videoR{"./example/calib_imgs_5_video/outputR2.mp4"};
-    std::string outputPath{"./example/calib_imgs_5_video/result2m_far.mp4"};
+    std::string videoL{"./example/calib_imgs_5_video/outputL60cm.mp4"};
+    std::string videoR{"./example/calib_imgs_5_video/outputR60cm.mp4"};
+    std::string outputPath{};
 
     cv::VideoCapture capL(videoL);
     if(!capL.isOpened()){
@@ -122,6 +122,15 @@ void Demo::run(){
         // cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
         // std::cout << "xyz channels(): " << xyz.channels() << std::endl;
         // std::cout << "xyz type(): " << xyz.type() << std::endl;
+
+        // cv::Mat showMat1 = rectifyImageL.clone();
+        // cv::cvtColor(showMat1, showMat1, cv::COLOR_GRAY2BGR);
+        // std::vector<cv::Point2f> imagePts;
+        // this->_stereoCalib.projectPoint(worldPts, imagePts);
+        // for(const auto& pt : imagePts){
+        //     cv::circle(showMat1, pt, 5, cv::Scalar(0, 0, 255), 1);
+        // }
+        // cv::imwrite("./temp/showMat1.jpg", showMat1);
 
         // eye distance
         double eyeDistance = getDistance(worldPts[0], worldPts[1]);
@@ -191,8 +200,9 @@ void Demo::run(){
         sprintf(printStr, "distance: %.2f", mouthDistance);
         cv::putText(imgL, printStr, cv::Point((p1.x+p2.x)/2, (p1.y+p2.y)/2-5), cv::FONT_HERSHEY_COMPLEX, 1.0, cv::Scalar(0, 255, 255), 2);
 
+        // cv::imwrite("./temp/imgL.jpg", imgL);
+
         if(!outputPath.empty()){
-            // cv::imwrite("./temp/imgL.jpg", imgL);
             writer.write(imgL);
         }
         // //! print depth

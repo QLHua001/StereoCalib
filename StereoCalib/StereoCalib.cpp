@@ -169,16 +169,7 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
 }
 
 void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, std::vector<cv::Point2f>& landmarkL, std::vector<cv::Point2f>& landmarkR, cv::Mat& filteredDisparityColorMap, cv::Mat& xyz, std::vector<cv::Point3f>& worldPts){
-    // int minDisparity = 0;
-    // int numDisparities = 64;
-    // int blockSize = 5;
-    // int P1 = 8 * 3 * blockSize * blockSize;
-    // int P2 = 32 * 3 * blockSize * blockSize;
-    // int disp12MaxDiff = 2;
-    // int preFilterCap = 0;
-    // int uniquenessRatio = 5;
-    // int speckleWindowSize  = 50;
-    // int speckleRange = 2;
+
     // // int mode = cv::StereoSGBM::MODE_SGBM_3WAY;
     cv::Mat showLandmarkL = rectifyImageL.clone();
     cv::Mat showLandmarkR = rectifyImageR.clone();
@@ -189,88 +180,7 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
     cv::imwrite("./temp/showLandmarkL.jpg", showLandmarkL);
     cv::imwrite("./temp/showLandmarkR.jpg", showLandmarkR);
 
-    // cv::Ptr<cv::StereoSGBM> sgbmL = cv::StereoSGBM::create(minDisparity, numDisparities, blockSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio, speckleWindowSize, speckleRange, mode);
-    // cv::Ptr<cv::StereoMatcher> sgbmR = cv::ximgproc::createRightMatcher(sgbmL);
-
-    // //! rectifyImageL, rectifyImageR 8-bit single-channel image.
-    // // cv::Mat disparity;
-    // cv::Mat disparityL, disparityR;
-    // sgbmL->compute(rectifyImageL, rectifyImageR, disparityL);
-    // sgbmR->compute(rectifyImageR, rectifyImageL, disparityR);
-
-    // //! WLS Filter 
-    // double lmbda = 80000;
-    // double sigma = 1.8;
-    // cv::Ptr<cv::ximgproc::DisparityWLSFilter> wlsFilter = cv::ximgproc::createDisparityWLSFilter(sgbmL);
-    // wlsFilter->setLambda(lmbda);
-    // wlsFilter->setSigmaColor(sigma);
-
-    // cv::Mat filteredDisparityMap;
-    // // cv::Mat filteredDisparityColorMap;
-    // wlsFilter->filter(disparityL, rectifyImageL, filteredDisparityMap, disparityR);
-    // filteredDisparityMap.convertTo(filteredDisparityMap, CV_32F, 1/16.0);
-    // cv::normalize(filteredDisparityMap, filteredDisparityMap, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
-    // cv::medianBlur(filteredDisparityMap,filteredDisparityMap, 9);
-    // cv::applyColorMap(filteredDisparityMap, filteredDisparityColorMap, cv::COLORMAP_JET);
-    // cv::imwrite("./temp/filteredDisparityMap.jpg", filteredDisparityMap);
-    // // cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
-
-    // cv::Mat disparity8UL, disparity8UR;
-    // disparityL.convertTo(disparity8UL, CV_32F, 1/16.0);
-    // cv::normalize(disparity8UL, disparity8UL, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
-    // cv::medianBlur(disparity8UL,disparity8UL, 9);
-    // // cv::imwrite("./temp/disparity8UL.jpg", disparity8UL);
-
-    // // cv::Mat point3DMat;
-    // cv::reprojectImageTo3D(disparityL, xyz, this->_Q, true);
-    // xyz.convertTo(xyz, CV_32F, 16.0);
-
-    //############################### 20231113 #######################################
-
-    // int minDisparity = 0;
-    // int numDisparities = 64;
-    // int blockSize = 5;
-    // int disp12MaxDiff = 2;
-    // int P1 = 8 * 3 * blockSize * blockSize;
-    // int P2 = 32 * 3 * blockSize * blockSize;
-    // int speckleWindowSize  = 50;
-    // int speckleRange = 2;
-    // int uniquenessRatio = 5;
-
-    // cv::Ptr<cv::StereoSGBM> sgbmL = cv::StereoSGBM::create();
-    // sgbmL->setMinDisparity(minDisparity);
-    // sgbmL->setNumDisparities(numDisparities);
-    // sgbmL->setBlockSize(blockSize);
-    // sgbmL->setDisp12MaxDiff(disp12MaxDiff);
-    // sgbmL->setP1(P1);
-    // sgbmL->setP2(P2);
-    // sgbmL->setSpeckleWindowSize(speckleWindowSize);
-    // sgbmL->setSpeckleRange(speckleRange);
-    // sgbmL->setUniquenessRatio(uniquenessRatio);
-
-    // cv::Ptr<cv::StereoMatcher> sgbmR = cv::ximgproc::createRightMatcher(sgbmL);
-
-    // // //! WLS Filter 
-    // double lmbda = 80000;
-    // double sigma = 1.8;
-    // cv::Ptr<cv::ximgproc::DisparityWLSFilter> wlsFilter = cv::ximgproc::createDisparityWLSFilter(sgbmL);
-    // wlsFilter->setLambda(lmbda);
-    // wlsFilter->setSigmaColor(sigma);
-
-    // cv::Mat disparityL;
-    // sgbmL->compute(rectifyImageL, rectifyImageR, disparityL);
-
-    // cv::Mat disparityR;
-    // sgbmR->compute(rectifyImageR, rectifyImageL, disparityR);
-
-    // cv::Mat filteredDisparityMap;
-    // wlsFilter->filter(disparityL, rectifyImageL, filteredDisparityMap, disparityR);
-
-    // cv::Mat vDisparityL, vColorDisparityL;
-    // cv::normalize(filteredDisparityMap, vDisparityL, 0, 255, cv::NormTypes::NORM_MINMAX, CV_8U);
-    // cv::imwrite("./temp/vDisparityL.jpg", vDisparityL);    
-    // cv::applyColorMap(vDisparityL, vColorDisparityL, cv::COLORMAP_JET);
-    // cv::imwrite("./temp/vColorDisparityL.jpg", vColorDisparityL);
+    
 
     std::vector<int> index{6, 10, 14, 15, 17};
     //! ### 1
@@ -304,6 +214,14 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
     //     std::cout << "dist3: " << "x: " << x << ", y: " << y << ", z: " << z << std::endl;
     // }
     //############################### 20231113 #######################################
+}
+
+void StereoCalib::projectPoint(const std::vector<cv::Point3f>& worldPts, std::vector<cv::Point2f>& imagePts){
+    for(const auto& pt : worldPts){
+        cv::Mat_<double> pt3d = (cv::Mat_<double>(3, 1) << pt.x, pt.y, pt.z);
+        cv::Mat_<double> imagePoint = this->_cameraMatrixL * cv::Mat(pt3d);
+        imagePts.push_back(cv::Point2f(imagePoint.at<double>(0, 0)/imagePoint.at<double>(2, 0), imagePoint.at<double>(1, 0)/imagePoint.at<double>(2, 0)));
+    }
 }
 
 void StereoCalib::calcStereoDist(double lx, double ly, double rx, double ry){
