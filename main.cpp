@@ -1,5 +1,10 @@
 #include <iostream>
+
+#ifdef __linux__
 #include <dirent.h>
+#elif _WIN32
+#include <io.h>
+#endif
 
 #include "StereoCalib/StereoCalib.h"
 #include "QNN/Predictor/DataTypeDMS.h"
@@ -14,6 +19,35 @@ bool searchSpecifiedFiles(std::string folder, std::string extension, std::vector
     if(folder.back() != '/'){
         folder += "/";
     }
+
+#ifdef _WIN32
+
+    std::string searchPath = folder + "/*" + extension;
+    intptr_t handle;
+    _finddata_t fileInfo;
+
+    // 查找第一个文件/目录
+    handle = _findfirst(searchPath.c_str(), &fileInfo);
+    if (handle == -1)
+    {
+        std::cout << "Failed to find first file" << std::endl;
+        return false;
+    }
+
+    do
+    {
+        if (!(fileInfo.attrib & _A_SUBDIR))
+        {
+            std::string filename(fileInfo.name);
+            std::string filePath = folder + "/" + filename;
+            //std::cout << "File: " << filePath << std::endl;
+            filePaths.push_back(filePath);
+        }
+    } while (_findnext(handle, &fileInfo) == 0);
+
+    _findclose(handle);
+
+#elif __linux__
 
     DIR* pDir;
     dirent* pCur;
@@ -32,6 +66,7 @@ bool searchSpecifiedFiles(std::string folder, std::string extension, std::vector
             }
         }
     }
+#endif
 
     return true;
 }
