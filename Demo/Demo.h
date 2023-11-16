@@ -6,7 +6,13 @@
 
 class Demo{
 public:
-    Demo();
+    enum CalibSrcType {
+        TYPE_VIDEO,
+        TYPE_PHOTO
+    };
+
+public:
+    Demo(CalibSrcType calibSrcType, bool isOverolad = false);
     ~Demo();
 
     void run();

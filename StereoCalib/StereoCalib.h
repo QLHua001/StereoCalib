@@ -7,13 +7,14 @@ class StereoCalib{
 public:
     StereoCalib();
 
+    bool loadParams(const std::string& calibParamYmlPath);
     void setIntrisicsL(cv::Mat cameraMatrix, cv::Mat distCoeffs);
     void setIntrisicsR(cv::Mat cameraMatrix, cv::Mat distCoeffs);
 
     void stereoCalibrate(const std::vector<std::string>& imgLPathList, const std::vector<std::string>& imgRPathList);
     void stereoRectify(const cv::Mat imageL, const cv::Mat imageR, cv::Mat& rectifyImageL, cv::Mat& rectifyImageR);
     void stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, std::vector<cv::Point2f>& landmarkL, std::vector<cv::Point2f>& landmarkR, cv::Mat& filteredDisparityColorMap, cv::Mat& xyz, std::vector<cv::Point3f>& worldPts);
-    void projectPoint(const std::vector<cv::Point3f>& worldPts, std::vector<cv::Point2f>& imagePts);
+    // void projectPoint(const std::vector<cv::Point3f>& worldPts, std::vector<cv::Point2f>& imagePts);
     
     void calcStereoDist(double lx, double ly, double rx, double ry);
     cv::Point3f calculateDistance(cv::Point3f in);

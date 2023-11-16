@@ -117,7 +117,7 @@ void test_StereoCalib(){
 }
 
 void runDemo(){
-    Demo demo;
+    Demo demo(Demo::CalibSrcType::TYPE_PHOTO);
 
     demo.run();
 }

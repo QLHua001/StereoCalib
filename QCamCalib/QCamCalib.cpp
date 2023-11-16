@@ -67,8 +67,8 @@ bool QCamCalib::calibrateCamera(const std::vector<std::vector<cv::Point2f>>& ima
     }
     }
 
-    cameraMatrix = this->_cameraMatrix;
-    distCoeffs = this->_distCoeffs;
+    cameraMatrix = this->_cameraMatrix.clone();
+    distCoeffs = this->_distCoeffs.clone();
 
     return true;
 }

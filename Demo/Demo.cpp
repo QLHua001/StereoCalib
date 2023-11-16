@@ -5,7 +5,7 @@
 #include "Demo.h"
 #include "QNN/Predictor/DataTypeDMS.h"
 
-Demo::Demo(){
+Demo::Demo(CalibSrcType calibSrcType, bool isOverolad){
 
     this->_AiDMSMTYolox = new AIDMSMTYolox;
     this->_AiDMSMTYolox->init();
@@ -13,17 +13,27 @@ Demo::Demo(){
     this->_AiDMSMTFace = new AIDMSMTFace;
     this->_AiDMSMTFace->init();
 
-    QCamCalib::Config camCalibConfig;
-    camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
-    camCalibConfig.patternSize = cv::Size(8, 5);
-    camCalibConfig.squareSize = cv::Size(30, 30);
-    camCalibConfig.srcImgSize = cv::Size(1920, 1080);
-    if(!this->_camCalib.init(camCalibConfig)){
-        printf("QCamCalib init fail!\n");
-    }
-    printf("QCamCalib init successfully!\n");
+    std::string calibParamYmlPath{"./config/calibParam.yml"};
+    bool ret;
+    ret = (access(calibParamYmlPath.c_str(), F_OK) == 0);
 
-    this->calibrate();
+    if(!isOverolad && ret){
+
+        this->_stereoCalib.loadParams(calibParamYmlPath);
+
+    }else{
+        QCamCalib::Config camCalibConfig;
+        camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
+        camCalibConfig.patternSize = cv::Size(8, 5);
+        camCalibConfig.squareSize = cv::Size(30, 30);
+        camCalibConfig.srcImgSize = cv::Size(1920, 1080);
+        if(!this->_camCalib.init(camCalibConfig)){
+            printf("QCamCalib init fail!\n");
+        }
+        printf("QCamCalib init successfully!\n");
+
+        this->calibrate();
+    }
 
 }
 
@@ -57,7 +67,7 @@ void Demo::run(){
 
     std::string videoL{"./example/calib_imgs_5_video/outputL60cm.mp4"};
     std::string videoR{"./example/calib_imgs_5_video/outputR60cm.mp4"};
-    std::string outputPath{};
+    std::string outputPath{"./temp/result_60cm.mp4"};
 
     cv::VideoCapture capL(videoL);
     if(!capL.isOpened()){
