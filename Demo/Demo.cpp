@@ -228,9 +228,9 @@ void Demo::run(){
         }
     
 #ifdef _WIN32
-        cv::Mat showImg;
-        cv::resize(imgL, showImg, cv::Size(imgL.cols / 2.0, imgL.rows / 2.0));
-        cv::imshow("showImg", showImg);
+        // cv::Mat showImg;
+        // cv::resize(imgL, showImg, cv::Size(imgL.cols / 2.0, imgL.rows / 2.0));
+        cv::imshow("showMat", showMat);
         cv::waitKey(10);
 #endif
 
