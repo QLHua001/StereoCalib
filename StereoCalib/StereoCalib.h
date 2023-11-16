@@ -38,4 +38,7 @@ private:
     cv::Mat _mapXR;
     cv::Mat _mapYR;
 
+    double _scale{0.5};
+
+    cv::Ptr<cv::StereoSGBM> _sgbm;
 };

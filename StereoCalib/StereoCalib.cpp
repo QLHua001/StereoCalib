@@ -24,7 +24,24 @@ StereoCalib::StereoCalib(){
     // this->_T = (cv::Mat_<double>(3, 1) << 6.7222911495930981e+00, -3.5220917208478736e-01,
     //    2.4511341222549290e-01 );
 
-    this->_imageSize = cv::Size(1920, 1080);
+    this->_imageSize = cv::Size(1920 * this->_scale, 1080 * this->_scale);
+
+    int minDisparity = 0;
+    int numDisparities = 160;
+    int blockSize = 5;
+    this->_sgbm = cv::StereoSGBM::create(minDisparity, numDisparities, blockSize);
+
+    int P1 = 8 * 3 * blockSize * blockSize;
+    int P2 = 32 * 3 * blockSize * blockSize;
+    this->_sgbm->setP1(P1);
+    this->_sgbm->setP2(P2);
+    this->_sgbm->setPreFilterCap(10);
+	this->_sgbm->setUniquenessRatio(10);
+	this->_sgbm->setSpeckleRange(2);
+	this->_sgbm->setSpeckleWindowSize(50);
+	this->_sgbm->setDisp12MaxDiff(2);
+    //this->_sgbm->setNumDisparities(1);
+	this->_sgbm->setMode(cv::StereoSGBM::MODE_SGBM_3WAY);
 
 }
 
@@ -76,6 +93,8 @@ void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, 
 
         cv::Mat imgL = cv::imread(imgLPath);
         cv::Mat imgR = cv::imread(imgRPath);
+        cv::resize(imgL, imgL, cv::Size(), this->_scale, this->_scale);
+        cv::resize(imgR, imgR, cv::Size(), this->_scale, this->_scale);
 
         cv::Mat grayImgL, grayImgR;
         cv::cvtColor(imgL, grayImgL, cv::COLOR_BGR2GRAY);
@@ -209,39 +228,23 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
 
 void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, std::vector<cv::Point2f>& landmarkL, std::vector<cv::Point2f>& landmarkR, cv::Mat& filteredDisparityColorMap, cv::Mat& xyz, std::vector<cv::Point3f>& worldPts){
 
-    cv::Mat showLandmarkL = rectifyImageL.clone();
-    cv::Mat showLandmarkR = rectifyImageR.clone();
-    for(int i = 0; i < landmarkL.size(); i++){
-        cv::circle(showLandmarkL, landmarkL[i], 1, cv::Scalar(255), -1);
-        cv::circle(showLandmarkR, landmarkR[i], 1, cv::Scalar(255), -1);
-    }
-    cv::imwrite("./temp/showLandmarkL.jpg", showLandmarkL);
-    cv::imwrite("./temp/showLandmarkR.jpg", showLandmarkR);
+    // cv::Mat showLandmarkL = rectifyImageL.clone();
+    // cv::Mat showLandmarkR = rectifyImageR.clone();
+    // for(int i = 0; i < landmarkL.size(); i++){
+    //     cv::circle(showLandmarkL, landmarkL[i], 1, cv::Scalar(255), -1);
+    //     cv::circle(showLandmarkR, landmarkR[i], 1, cv::Scalar(255), -1);
+    // }
+    // cv::imwrite("./temp/showLandmarkL.jpg", showLandmarkL);
+    // cv::imwrite("./temp/showLandmarkR.jpg", showLandmarkR);
 
-    // int minDisparity = 0;
-    // int numDisparities = 500;
-    // int blockSize = 7;
-    // cv::Ptr<cv::StereoSGBM> sgbm = cv::StereoSGBM::create(minDisparity, numDisparities, blockSize);
-
-    // int P1 = 8 * 3 * blockSize * blockSize;
-    // int P2 = 32 * 3 * blockSize * blockSize;
-    // sgbm->setP1(P1);
-    // sgbm->setP2(P2);
-    // sgbm->setPreFilterCap(10);
-	// sgbm->setUniquenessRatio(5);
-	// sgbm->setSpeckleRange(2);
-	// sgbm->setSpeckleWindowSize(50);
-	// sgbm->setDisp12MaxDiff(-1);
-	// //sgbm->setNumDisparities(1);
-	// sgbm->setMode(cv::StereoSGBM::MODE_HH);
-
-    // cv::Mat disp, disp8;
-    // sgbm->compute(rectifyImageL, rectifyImageR, disp);
-    // disp8 = cv::Mat(disp.rows, disp.cols, CV_8UC1);
-    // cv::normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-    // cv::reprojectImageTo3D(disp, xyz, this->_Q, true);
-    // xyz = xyz * 16;
-    // cv::imwrite("./temp/disp.jpg", disp);
+    cv::Mat disp, disp8, dispColor;
+    this->_sgbm->compute(rectifyImageL, rectifyImageR, disp);
+    disp8 = cv::Mat(disp.rows, disp.cols, CV_8UC1);
+    cv::normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+    cv::applyColorMap(disp8, filteredDisparityColorMap, cv::COLORMAP_JET);
+    cv::reprojectImageTo3D(disp, xyz, this->_Q, true);
+    xyz = xyz * 16;
+    // cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
     
 
     std::vector<int> index{6, 10, 14, 15, 17};
@@ -250,6 +253,8 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
         int t = index[i];
         cv::Point3f pt1(landmarkL[t].x, landmarkL[t].y, abs(landmarkL[t].x-landmarkR[t].x));
         cv::Point3f out = this->calculateDistance(pt1);
+        // cv::Point3f t3d = xyz.at<cv::Vec3f>(landmarkL[t].y, landmarkL[t].x);
+        // std::cout << "t3d: x: " << t3d.x << ", y: " << t3d.y << ", z: " << t3d.z << std::endl;
         if(t == 14){
             std::cout << "dist1: " << out << std::endl;
         }

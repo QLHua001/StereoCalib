@@ -35,5 +35,7 @@ private:
 
     std::vector<cv::Point2f> _landmarksL;
     std::vector<cv::Point2f> _landmarksR;
+
+    double _scale{0.5};
 };
 
