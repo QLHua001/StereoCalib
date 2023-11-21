@@ -18,7 +18,7 @@ Demo::Demo(CalibSrcType calibSrcType, bool isOverolad){
     this->_AiDMSMTFace = new AIDMSMTFace;
     this->_AiDMSMTFace->init();
 
-    std::string calibParamYmlPath{"./config/Params00001.yml"};
+    std::string calibParamYmlPath{"./config/Params.yml"};
     bool ret;
 #ifdef __linux__
     ret = (access(calibParamYmlPath.c_str(), F_OK) == 0);
@@ -70,7 +70,7 @@ Demo::Demo(std::vector<int>& cameraId, bool isOverolad){
     this->_AiDMSMTFace = new AIDMSMTFace;
     this->_AiDMSMTFace->init();
 
-    std::string calibParamYmlPath{"./config/Params00001.yml"};
+    std::string calibParamYmlPath{"./config/Params.yml"};
     bool ret;
 #ifdef __linux__
     ret = (access(calibParamYmlPath.c_str(), F_OK) == 0);
@@ -98,7 +98,7 @@ Demo::Demo(std::vector<int>& cameraId, bool isOverolad){
         //########################################################################################
 
         // std::vector<int> cameras{0, 1};
-        CalibSys calibSys(CalibSys::InputType::TYPE_CAMERA, cameraId, cv::Size(1920, 1080));
+        CalibSys calibSys(CalibSys::InputType::TYPE_CAMERA, cameraId, this->_cameraUnifiedSize);
 
         // std::vector<std::string> videos{
         //     "./example/calib_8/videoL.mp4",
@@ -327,6 +327,13 @@ void Demo::run(){
 
 void Demo::run(cv::Mat imgL, cv::Mat imgR){
 
+    if((imgL.cols != this->_cameraUnifiedSize.width) || (imgL.rows != this->_cameraUnifiedSize.height)){
+        cv::resize(imgL, imgL, this->_cameraUnifiedSize);
+    }
+    if((imgR.cols != this->_cameraUnifiedSize.width) || (imgR.rows != this->_cameraUnifiedSize.height)){
+        cv::resize(imgR, imgR, this->_cameraUnifiedSize);
+    }
+
     cv::Mat grayImgL, grayImgR;
     cv::cvtColor(imgL, grayImgL, cv::COLOR_BGR2GRAY);
     cv::cvtColor(imgR, grayImgR, cv::COLOR_BGR2GRAY);
@@ -435,6 +442,7 @@ void Demo::run(cv::Mat imgL, cv::Mat imgR){
     }
 
 #ifdef _WIN32
+        cv::resize(showMat, showMat, cv::Size(), 0.5, 0.5);
         cv::imshow("showMat", showMat);
         cv::waitKey(10);
 #endif

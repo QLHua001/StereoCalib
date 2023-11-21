@@ -38,6 +38,8 @@ private:
     std::vector<cv::Point2f> _landmarksL;
     std::vector<cv::Point2f> _landmarksR;
 
+    cv::Size _cameraUnifiedSize{1920, 1080};
+
     double _scale{0.5};
 };
 

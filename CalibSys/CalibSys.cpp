@@ -63,8 +63,8 @@ void CalibSys::init(){
     
 
     double scale = 0.5;
-    cv::Size patternSize(7, 6);
-    cv::Size squareSize(25, 25);
+    cv::Size patternSize(8, 5);
+    cv::Size squareSize(30, 30);
     QCamCalib::Config camCalibConfig;
     camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
     camCalibConfig.patternSize = patternSize;
@@ -92,7 +92,7 @@ bool CalibSys::run(){
     while(true){
         loop++;
 
-        this->_controller.notify();
+        this->_controller.notify(this->_imageSize);
 
         std::vector<cv::Mat>& currFrames = this->_controller.getCurrFrame();
         // cv::Mat frameL, frameR;
@@ -124,7 +124,7 @@ bool CalibSys::run(){
             this->_stereoCalib.stereoCalibrate(corners[0], corners[1]);
 
             char filename[128];
-            sprintf(filename, "./config/Params%05d.yml", index);
+            sprintf(filename, "./config/Params.yml");
             this->_stereoCalib.saveParams(filename);
 
             startStereoCalibFlag = false;
@@ -147,7 +147,7 @@ bool CalibSys::run(){
             printf("collect finish.\n");
             startStereoCalibFlag = true;
             this->_controller.setTitle("Begin Stereo Calibrate!", 3);
-            this->_controller.notify();
+            this->_controller.notify(this->_imageSize);
         }
 
 

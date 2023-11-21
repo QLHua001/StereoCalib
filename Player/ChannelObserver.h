@@ -4,5 +4,5 @@
 class ChannelObserver{
 
 public:
-    virtual int snapshot(cv::Mat& frame) = 0;
+    virtual int snapshot(cv::Mat& frame, cv::Size unifiedSize) = 0;
 };

@@ -153,7 +153,7 @@ void test_StereoCalib(){
 
 void runDemo(){
 
-    std::vector<int> cameraId{0, 1};
+    std::vector<int> cameraId{0, 1}; // camera id
     Demo demo(cameraId);
 
     // std::string videoL{"./example/calib_imgs_5_video/outputL1.mp4"};
@@ -196,15 +196,15 @@ void runDemo(){
         capR >> imgR;
         if(imgL.empty() || imgR.empty()) break;
 
-        int tarW = 1920 * 0.5;
-        int tarH = 1080 * 0.5;
+        // int tarW = 1920 * 0.5;
+        // int tarH = 1080 * 0.5;
 
-        if((imgL.cols != tarW) || (imgL.rows != tarH)){
-            cv::resize(imgL, imgL, cv::Size(tarW, tarH));
-        }
-        if((imgR.cols != tarW) || (imgR.rows != tarH)){
-            cv::resize(imgR, imgR, cv::Size(tarW, tarH));
-        }
+        // if((imgL.cols != tarW) || (imgL.rows != tarH)){
+        //     cv::resize(imgL, imgL, cv::Size(tarW, tarH));
+        // }
+        // if((imgR.cols != tarW) || (imgR.rows != tarH)){
+        //     cv::resize(imgR, imgR, cv::Size(tarW, tarH));
+        // }
 
         // imgL = testImgL;
         // imgR = testImgR;

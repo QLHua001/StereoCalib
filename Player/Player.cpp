@@ -26,14 +26,17 @@ Player::~Player(){
     this->_cap.release();
 }
 
-int Player::snapshot(cv::Mat& frame){
+int Player::snapshot(cv::Mat& frame, cv::Size unifiedSize){
     std::cout << this->_videoPath << " snapshot..." << std::endl;
 
     this->_cap.read(frame);
 
     // for convenience to test, scale the image to unified size 
-    if((frame.cols != 1920) || (frame.rows != 1080)){
-        cv::resize(frame, frame, cv::Size(1920, 1080));
+    // if((frame.cols != 1920) || (frame.rows != 1080)){
+    //     cv::resize(frame, frame, cv::Size(1920, 1080));
+    // }
+    if((frame.cols != unifiedSize.width) || (frame.rows != unifiedSize.height)){
+        cv::resize(frame, frame, unifiedSize);
     }
 
     return 0;

@@ -11,7 +11,7 @@ public:
     Player(int deviceId);
     ~Player();
 
-    virtual int snapshot(cv::Mat& frame);
+    virtual int snapshot(cv::Mat& frame, cv::Size unifiedSize);
 
 private:
     std::string _videoPath;

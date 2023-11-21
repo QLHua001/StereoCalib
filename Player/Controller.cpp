@@ -26,12 +26,12 @@ void Controller::attach(ChannelObserver* channel){
 //     this->updateShowMat();
 // }
 
-void Controller::notify(){
+void Controller::notify(cv::Size unifiedSize){
     std::list<ChannelObserver*>::iterator it = this->_channelObserverList.begin();
     int index = 0;
     while(it != this->_channelObserverList.end()){
         cv::Mat frame;
-        (*it)->snapshot(frame);
+        (*it)->snapshot(frame, unifiedSize);
         if(!frame.empty()){
             this->_frames[index] = frame.clone();
             cv::resize(frame, frame, cv::Size(), this->_scale, this->_scale);

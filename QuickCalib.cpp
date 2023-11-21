@@ -73,7 +73,7 @@ void test_QuickCalib(){
     while(true){
         loop++;
 
-        controller.notify();
+        controller.notify(frameSize);
 
         std::vector<cv::Mat>& currFrames = controller.getCurrFrame();
         // cv::Mat frameL, frameR;
@@ -121,7 +121,7 @@ void test_QuickCalib(){
             printf("collect finish.\n");
             startStereoCalibFlag = true;
             controller.setTitle("Begin Stereo Calibrate!", 3);
-            controller.notify();
+            controller.notify(frameSize);
         }
 
 

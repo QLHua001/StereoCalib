@@ -51,6 +51,7 @@ bool StereoCalib::loadParams(const std::string& calibParamYmlPath){
 
     cv::FileStorage calibParamYml(calibParamYmlPath, cv::FileStorage::READ);
 
+    calibParamYml["scale"] >> this->_scale;
     calibParamYml["Q"] >> this->_Q;
     calibParamYml["mapXL"] >> this->_mapXL;
     calibParamYml["mapYL"] >> this->_mapYL;
@@ -187,7 +188,7 @@ void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, 
     cv::initUndistortRectifyMap(cameraMatrixR, distCoeffR, R2, P2, this->_imageSize, CV_32FC1, this->_mapXR, this->_mapYR);
 
     cv::FileStorage calibParamYml("./config/calibParam.yml", cv::FileStorage::WRITE);
-
+    calibParamYml.write("scale", this->_scale);
     calibParamYml.write("M1", this->_cameraMatrixL);
     calibParamYml.write("D1", this->_distCoeffL);
     calibParamYml.write("M2", this->_cameraMatrixR);
@@ -275,6 +276,10 @@ void StereoCalib::stereoCalibrate(std::vector<std::vector<cv::Point2f>>& imagePo
 
 void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectifyImageL, cv::Mat& rectifyImageR){
 
+
+    cv::resize(imageL, imageL, cv::Size(), this->_scale, this->_scale);
+    cv::resize(imageR, imageR, cv::Size(), this->_scale, this->_scale);
+
     //! 经过remap之后，左右相机的图像已经共面并且行对齐
     // cv::Mat rectifyImageL, rectifyImageR;
     cv::remap(imageL, rectifyImageL, this->_mapXL, this->_mapYL, cv::INTER_LINEAR);
@@ -283,15 +288,18 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
     // cv::rectangle(rectifyImageL, this->_validRoi[0], cv::Scalar(255), 2);
     // cv::rectangle(rectifyImageR, this->_validRoi[1], cv::Scalar(255), 2);
 
-    // // 校验
-    // cv::Size showSize(this->_imageSize.width * 2, this->_imageSize.height);
-    // cv::Mat showRectifyImg = cv::Mat::zeros(showSize, CV_8UC1);
-    // rectifyImageL.copyTo(showRectifyImg(cv::Rect(0, 0, showSize.width / 2.0, showSize.height)));
-    // rectifyImageR.copyTo(showRectifyImg(cv::Rect(showSize.width / 2.0, 0, showSize.width / 2.0, showSize.height)));
-    // for(int i = 0; i < showSize.height; i += 50){
-    //     cv::line(showRectifyImg, cv::Point(0, i), cv::Point(showSize.width-1, i), cv::Scalar(255), 1, cv::LINE_AA);
-    // }
-    // cv::imwrite("./temp/showRectifyImg.jpg", showRectifyImg);
+//     // 校验
+//     cv::Size showSize(this->_imageSize.width / 2.0 * 2, this->_imageSize.height / 2.0);
+//     cv::Mat showRectifyImg = cv::Mat::zeros(showSize, CV_8UC1);
+//     rectifyImageL.copyTo(showRectifyImg(cv::Rect(0, 0, showSize.width / 2.0, showSize.height)));
+//     rectifyImageR.copyTo(showRectifyImg(cv::Rect(showSize.width / 2.0, 0, showSize.width / 2.0, showSize.height)));
+//     for(int i = 0; i < showSize.height; i += 50){
+//         cv::line(showRectifyImg, cv::Point(0, i), cv::Point(showSize.width-1, i), cv::Scalar(255), 1, cv::LINE_AA);
+//     }
+// #ifdef _WIN32
+//     cv::imshow("showRectifyImg", showRectifyImg);
+//     cv::waitKey(1);
+// #endif
 }
 
 void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, std::vector<cv::Point2f>& landmarkL, std::vector<cv::Point2f>& landmarkR, cv::Mat& filteredDisparityColorMap, cv::Mat& xyz, std::vector<cv::Point3f>& worldPts){
@@ -354,6 +362,7 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
 void StereoCalib::saveParams(const std::string& path){
     cv::FileStorage calibParamYml(path, cv::FileStorage::WRITE);
 
+    calibParamYml.write("scale", this->_scale);
     calibParamYml.write("M1", this->_cameraMatrixL);
     calibParamYml.write("D1", this->_distCoeffL);
     calibParamYml.write("M2", this->_cameraMatrixR);

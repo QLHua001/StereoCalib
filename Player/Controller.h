@@ -13,7 +13,7 @@ public:
     void setImgSize(cv::Size imageSize);
     virtual void attach(ChannelObserver* channel); 
     // virtual void detach(ChannelObserver* channel);
-    virtual void notify();
+    virtual void notify(cv::Size unifiedSize);
 
     std::vector<cv::Mat>& getCurrFrame();
     cv::Mat& getShowMat();
