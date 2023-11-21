@@ -78,6 +78,14 @@ int Collector::findChessboardCorners(std::vector<cv::Mat>& frames){
     }
 
     for(int i = 0; i < temp.size(); i++){
+
+#ifdef _WIN32
+        // cv::Mat showMat = frames[i];
+        // cv::resize(showMat, showMat, cv::Size(), 0.5, 0.5);
+        // cv::drawChessboardCorners(showMat, cv::Size(7, 6), temp[i], true);
+        // cv::imshow("temp-corners", showMat);
+        // cv::waitKey(1);
+#endif
         this->_corners[i].push_back(temp[i]);
     }
 

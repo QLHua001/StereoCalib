@@ -26,9 +26,12 @@ bool QCamCalib::findChessboardCorners(cv::Mat srcImg, std::vector<cv::Point2f>& 
         cv::cornerSubPix(grayImg, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
     }
 
-    // cv::Mat showImg = srcImg.clone();
-    // cv::drawChessboardCorners(showImg, patternSize, corners, patternfound);
-    // cv::imwrite("./temp/showImg.jpg", showImg);
+//     cv::Mat showImg = grayImg.clone();
+//     cv::drawChessboardCorners(showImg, patternSize, corners, patternfound);
+// #ifdef _WIN32
+//     cv::imshow("showImg-corners", showImg);
+//     cv::waitKey(1);
+// #endif
 
     return patternfound;
 }

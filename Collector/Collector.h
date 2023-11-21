@@ -34,7 +34,7 @@ private:
     double _timeInterval2{7}; // seconds
     double _timeInterval3{9}; // seconds
 
-    int _sampleNum{3};
+    int _sampleNum{5};
     int _count;
 
     QCamCalib _camCalib;

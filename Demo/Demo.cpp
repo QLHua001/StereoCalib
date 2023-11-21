@@ -8,6 +8,7 @@
 
 #include "Demo.h"
 #include "QNN/Predictor/DataTypeDMS.h"
+#include "CalibSys/CalibSys.h"
 
 Demo::Demo(CalibSrcType calibSrcType, bool isOverolad){
 
@@ -17,7 +18,7 @@ Demo::Demo(CalibSrcType calibSrcType, bool isOverolad){
     this->_AiDMSMTFace = new AIDMSMTFace;
     this->_AiDMSMTFace->init();
 
-    std::string calibParamYmlPath{"./config/calibParam.yml"};
+    std::string calibParamYmlPath{"./config/Params00001.yml"};
     bool ret;
 #ifdef __linux__
     ret = (access(calibParamYmlPath.c_str(), F_OK) == 0);
@@ -30,19 +31,87 @@ Demo::Demo(CalibSrcType calibSrcType, bool isOverolad){
         this->_stereoCalib.loadParams(calibParamYmlPath);
 
     }else{
-        QCamCalib::Config camCalibConfig;
-        camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
-        camCalibConfig.patternSize = cv::Size(8, 5);
-        camCalibConfig.squareSize = cv::Size(30, 30);
-        camCalibConfig.srcImgSize = cv::Size(1920 * this->_scale, 1080 * this->_scale);
-        if(!this->_camCalib.init(camCalibConfig)){
-            printf("QCamCalib init fail!\n");
-        }
-        printf("QCamCalib init successfully!\n");
+        // QCamCalib::Config camCalibConfig;
+        // camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
+        // camCalibConfig.patternSize = cv::Size(8, 5);
+        // camCalibConfig.squareSize = cv::Size(30, 30);
+        // camCalibConfig.srcImgSize = cv::Size(1920 * this->_scale, 1080 * this->_scale);
+        // if(!this->_camCalib.init(camCalibConfig)){
+        //     printf("QCamCalib init fail!\n");
+        // }
+        // printf("QCamCalib init successfully!\n");
 
-        this->calibrate();
+        // this->calibrate();
+
+        //########################################################################################
+
+        // std::vector<int> cameras{0, 1};
+        // CalibSys calibSys(CalibSys::InputType::TYPE_CAMERA, cameras, cv::Size(1920, 1080));
+
+        std::vector<std::string> videos{
+            "./example/calib_8/videoL.mp4",
+            "./example/calib_8/videoR.mp4"
+        };
+        CalibSys calibSys(CalibSys::InputType::TYPE_VIDEO, videos, cv::Size(1920, 1080));
+
+        calibSys.init();
+        bool ret = calibSys.run();
+        if(ret == true){
+            this->_stereoCalib.loadParams(calibParamYmlPath);
+        }
     }
 
+}
+
+Demo::Demo(std::vector<int>& cameraId, bool isOverolad){
+    this->_AiDMSMTYolox = new AIDMSMTYolox;
+    this->_AiDMSMTYolox->init();
+
+    this->_AiDMSMTFace = new AIDMSMTFace;
+    this->_AiDMSMTFace->init();
+
+    std::string calibParamYmlPath{"./config/Params00001.yml"};
+    bool ret;
+#ifdef __linux__
+    ret = (access(calibParamYmlPath.c_str(), F_OK) == 0);
+#elif _WIN32
+    ret = (_access(calibParamYmlPath.c_str(), 0) == 0);
+#endif
+
+    if(!isOverolad && ret){
+
+        this->_stereoCalib.loadParams(calibParamYmlPath);
+
+    }else{
+        // QCamCalib::Config camCalibConfig;
+        // camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
+        // camCalibConfig.patternSize = cv::Size(8, 5);
+        // camCalibConfig.squareSize = cv::Size(30, 30);
+        // camCalibConfig.srcImgSize = cv::Size(1920 * this->_scale, 1080 * this->_scale);
+        // if(!this->_camCalib.init(camCalibConfig)){
+        //     printf("QCamCalib init fail!\n");
+        // }
+        // printf("QCamCalib init successfully!\n");
+
+        // this->calibrate();
+
+        //########################################################################################
+
+        // std::vector<int> cameras{0, 1};
+        CalibSys calibSys(CalibSys::InputType::TYPE_CAMERA, cameraId, cv::Size(1920, 1080));
+
+        // std::vector<std::string> videos{
+        //     "./example/calib_8/videoL.mp4",
+        //     "./example/calib_8/videoR.mp4"
+        // };
+        // CalibSys calibSys(CalibSys::InputType::TYPE_VIDEO, videos, cv::Size(1920, 1080));
+
+        calibSys.init();
+        bool ret = calibSys.run();
+        if(ret == true){
+            this->_stereoCalib.loadParams(calibParamYmlPath);
+        }
+    }
 }
 
 Demo::~Demo(){
@@ -66,12 +135,6 @@ static double getDistance(const cv::Point3f& p1, const cv::Point3f& p2){
 }
 
 void Demo::run(){
-    //return;
-    // std::string imgLPath{"./example/calib_imgs_6/left_17.jpg"};
-    // std::string imgRPath{"./example/calib_imgs_6/right_17.jpg"};
-
-    // cv::Mat testImgL = cv::imread(imgLPath);
-    // cv::Mat testImgR = cv::imread(imgRPath);
 
     std::string videoL{"./example/calib_imgs_5_video/outputL1.mp4"};
     std::string videoR{"./example/calib_imgs_5_video/outputR1.mp4"};
@@ -260,6 +323,122 @@ void Demo::run(){
     }
     capL.release();
     capR.release();
+}
+
+void Demo::run(cv::Mat imgL, cv::Mat imgR){
+
+    cv::Mat grayImgL, grayImgR;
+    cv::cvtColor(imgL, grayImgL, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(imgR, grayImgR, cv::COLOR_BGR2GRAY);
+
+    cv::Mat rectifyImageL;
+    cv::Mat rectifyImageR;
+    this->_stereoCalib.stereoRectify(grayImgL, grayImgR, rectifyImageL, rectifyImageR);
+    // cv::imwrite("./temp/rectifyImageL.jpg", rectifyImageL);
+    // cv::imwrite("./temp/rectifyImageR.jpg", rectifyImageR);
+    cv::Mat showMat(imgL.rows * 3 / 2, imgL.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+    imgL.copyTo(showMat(cv::Rect(0, 0, imgL.cols, imgL.rows)));
+    int y_offset = imgL.rows + 30;
+
+    this->detectLandmark(rectifyImageL, this->_landmarksL);
+    this->detectLandmark(rectifyImageR, this->_landmarksR);
+    if(!(this->_landmarksL.empty()) && !(this->_landmarksR.empty())) {
+
+        cv::Mat filteredDisparityColorMap;
+        cv::Mat xyz; //! CV_32FC3
+        std::vector<cv::Point3f> worldPts;
+        this->_stereoCalib.stereoSGBM(rectifyImageL, rectifyImageR, this->_landmarksL, this->_landmarksR, filteredDisparityColorMap, xyz, worldPts);
+        // cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
+        // std::cout << "xyz channels(): " << xyz.channels() << std::endl;
+        // std::cout << "xyz type(): " << xyz.type() << std::endl;
+
+        // cv::Mat showMat1 = rectifyImageL.clone();
+        // cv::cvtColor(showMat1, showMat1, cv::COLOR_GRAY2BGR);
+        // std::vector<cv::Point2f> imagePts;
+        // this->_stereoCalib.projectPoint(worldPts, imagePts);
+        // for(const auto& pt : imagePts){
+        //     cv::circle(showMat1, pt, 5, cv::Scalar(0, 0, 255), 1);
+        // }
+        // cv::imwrite("./temp/showMat1.jpg", showMat1);
+
+        // filteredDisparityColorMap.copyTo(showMat(cv::Rect(0, 0, imgL.cols, imgL.rows)));
+
+        // eye distance
+        double eyeDistance = getDistance(worldPts[0], worldPts[1]);
+        double mouthDistance = getDistance(worldPts[3], worldPts[4]);
+
+        std::vector<cv::Point2f> srcLandmarkL;
+        this->detectLandmark(grayImgL, srcLandmarkL);
+        if(srcLandmarkL.empty()) {
+            printf("srcLandmarkL is empty.\n");
+            return;
+        }
+
+        for(int i = 0; i < srcLandmarkL.size(); i++){
+            cv::circle(showMat, srcLandmarkL[i], 3, cv::Scalar(0, 255, 0), -1);
+        }
+
+        char printStr[64];
+        // std::vector<int> index{6, 10, 14, 15, 17};
+        // for(int i = 0; i < index.size(); i++){
+        //     int t = index[i];
+        //     cv::Point2f srcPt = srcLandmarkL[t];
+        //     cv::Point3f wPt = worldPts[i];
+        //     sprintf(printStr, "x:%.2f", wPt.x);
+        //     cv::putText(imgL, printStr, cv::Point(srcPt.x-5, srcPt.y-15), cv::FONT_HERSHEY_COMPLEX, 0.8, cv::Scalar(0, 255, 0));
+        //     sprintf(printStr, "y:%.2f", wPt.y);
+        //     cv::putText(imgL, printStr, cv::Point(srcPt.x-5, srcPt.y-10), cv::FONT_HERSHEY_COMPLEX, 0.8, cv::Scalar(0, 255, 0));
+        //     sprintf(printStr, "z:%.2f", wPt.z);
+        //     cv::putText(imgL, printStr, cv::Point(srcPt.x-5, srcPt.y-5), cv::FONT_HERSHEY_COMPLEX, 0.8, cv::Scalar(0, 255, 0));
+        // }
+
+        sprintf(printStr, "###left eye depth: %.2f", worldPts[0].z);
+        cv::putText(showMat, printStr, cv::Point(10, 0 + y_offset), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+
+        sprintf(printStr, "##right eye depth: %.2f", worldPts[1].z);
+        cv::putText(showMat, printStr, cv::Point(10, 30 + y_offset), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+
+        sprintf(printStr, "######nose depth: %.2f", worldPts[2].z);
+        cv::putText(showMat, printStr, cv::Point(10, 60 + y_offset), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+
+        sprintf(printStr, "#left mouth depth: %.2f", worldPts[3].z);
+        cv::putText(showMat, printStr, cv::Point(10, 90 + y_offset), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+
+        sprintf(printStr, "right mouth depth: %.2f", worldPts[4].z);
+        cv::putText(showMat, printStr, cv::Point(10, 120 + y_offset), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+
+        // std::sort(worldPts.begin(), worldPts.end(), [](const cv::Point3f& p1, const cv::Point3f& p2){
+        //     return p1.z < p2.z;
+        // });
+
+        double face_depth = ((worldPts[0].z + worldPts[1].z) / 2.0) - worldPts[2].z;
+
+        // double face_max_depth = worldPts[worldPts.size()-1].z - worldPts[0].z;
+        sprintf(printStr, "######face depth: %.2f", face_depth);
+        cv::putText(showMat, printStr, cv::Point(10, 150 + y_offset), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+
+        cv::Point2f p1, p2;
+
+        p1 = srcLandmarkL[6];
+        p2 = srcLandmarkL[10];
+        cv::line(showMat, p1, p2, cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
+        sprintf(printStr, "distance: %.2f", eyeDistance);
+        cv::putText(showMat, printStr, cv::Point((p1.x+p2.x)/2, (p1.y+p2.y)/2-5), cv::FONT_HERSHEY_COMPLEX, 1.0, cv::Scalar(0, 255, 255), 2);
+
+        p1 = srcLandmarkL[15];
+        p2 = srcLandmarkL[17];
+        cv::line(showMat, p1, p2, cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
+        sprintf(printStr, "distance: %.2f", mouthDistance);
+        cv::putText(showMat, printStr, cv::Point((p1.x+p2.x)/2, (p1.y+p2.y)/2-5), cv::FONT_HERSHEY_COMPLEX, 1.0, cv::Scalar(0, 255, 255), 2);
+
+        // cv::imwrite("./temp/showMat.jpg", showMat);
+    }
+
+#ifdef _WIN32
+        cv::imshow("showMat", showMat);
+        cv::waitKey(10);
+#endif
+
 }
 
 void Demo::calibrate(){

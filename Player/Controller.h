@@ -1,11 +1,3 @@
-/*
- * @Author: QLHua 1097505209@qq.com
- * @Date: 2023-11-19 20:10:14
- * @LastEditors: QLHua 1097505209@qq.com
- * @LastEditTime: 2023-11-20 16:44:43
- * @FilePath: /StereoCalib/Player/Controller.h
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 #pragma once
 
 #include <list>
@@ -44,7 +36,7 @@ private:
     // double _delay{30}; // millisecond
 
     cv::Size _frameSize;
-    double _scale{0.5};
+    double _scale{0.5}; // the parameter is only used to display scale
 
     std::string _title{""};
     double _displayTime{0};

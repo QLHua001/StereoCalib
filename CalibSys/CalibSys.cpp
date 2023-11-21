@@ -83,7 +83,7 @@ void CalibSys::init(){
 
 }
 
-void CalibSys::run(){
+bool CalibSys::run(){
 
     bool startCalibFlag = false;
     bool startStereoCalibFlag = false;
@@ -128,6 +128,8 @@ void CalibSys::run(){
             this->_stereoCalib.saveParams(filename);
 
             startStereoCalibFlag = false;
+
+            return true;
         }
 
 

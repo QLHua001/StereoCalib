@@ -20,7 +20,7 @@ public:
 
     void init();
 
-    void run();
+    bool run();
 
 private:
     InputType _inputType;

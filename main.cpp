@@ -152,9 +152,72 @@ void test_StereoCalib(){
 }
 
 void runDemo(){
-    Demo demo(Demo::CalibSrcType::TYPE_PHOTO);
 
-    demo.run();
+    std::vector<int> cameraId{0, 1};
+    Demo demo(cameraId);
+
+    // std::string videoL{"./example/calib_imgs_5_video/outputL1.mp4"};
+    // std::string videoR{"./example/calib_imgs_5_video/outputR1.mp4"};
+    std::string outputPath{""};
+
+    cv::VideoCapture capL(0);
+    if(!capL.isOpened()){
+        printf("open video fail!\n");
+        return;
+    }
+
+    cv::VideoCapture capR(1);
+    if(!capR.isOpened()){
+        printf("open video fail!\n");
+        return;
+    }
+
+    int frameW = capL.get(cv::CAP_PROP_FRAME_WIDTH);
+    int frameH = capL.get(cv::CAP_PROP_FRAME_HEIGHT);
+    int fps = int(capL.get(cv::CAP_PROP_FPS));
+    printf("frameW: %d\n", frameW);
+    printf("frameH: %d\n", frameH);
+    printf("fps: %d\n", fps);
+
+    cv::VideoWriter writer;
+    if(!outputPath.empty()){
+        writer.open(outputPath.c_str(), cv::VideoWriter::fourcc('X', 'V', 'I', 'D'), 15, cv::Size(frameW, frameH*1.5));
+        if(!writer.isOpened()){
+            printf("VideoWriter open fail!\n");
+            return;
+        }
+    }
+
+    cv::Mat imgL;
+    cv::Mat imgR;
+    while(true){
+
+        capL >> imgL;
+        capR >> imgR;
+        if(imgL.empty() || imgR.empty()) break;
+
+        int tarW = 1920 * 0.5;
+        int tarH = 1080 * 0.5;
+
+        if((imgL.cols != tarW) || (imgL.rows != tarH)){
+            cv::resize(imgL, imgL, cv::Size(tarW, tarH));
+        }
+        if((imgR.cols != tarW) || (imgR.rows != tarH)){
+            cv::resize(imgR, imgR, cv::Size(tarW, tarH));
+        }
+
+        // imgL = testImgL;
+        // imgR = testImgR;
+        if(imgL.empty() || imgR.empty()) break;
+
+        demo.run(imgL, imgR);
+    }
+    if(!outputPath.empty()){
+        writer.release();
+    }
+    capL.release();
+    capR.release();
+
 }
 
 void test_video(){
@@ -236,7 +299,7 @@ int main(int, char**){
 
     // test_StereoCalib();
 
-    // runDemo();
+    runDemo();
 
     // test_monoCalib();
 
@@ -244,7 +307,7 @@ int main(int, char**){
 
     // test_QuickCalib();
 
-    test_CalibSys();
+    // test_CalibSys();
 
     // test_video();
 

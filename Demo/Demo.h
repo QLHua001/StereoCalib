@@ -13,9 +13,11 @@ public:
 
 public:
     Demo(CalibSrcType calibSrcType, bool isOverolad = false);
+    Demo(std::vector<int>& cameraId, bool isOverolad = false);
     ~Demo();
 
     void run();
+    void run(cv::Mat imgL, cv::Mat imgR);
     void calibrate();
     void detectLandmark(const cv::Mat grayImgL, std::vector<cv::Point2f>& landmarks);
 
