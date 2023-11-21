@@ -75,7 +75,7 @@ void Demo::run(){
 
     std::string videoL{"./example/calib_imgs_5_video/outputL1.mp4"};
     std::string videoR{"./example/calib_imgs_5_video/outputR1.mp4"};
-    std::string outputPath{"./temp/result_1m.mp4"};
+    std::string outputPath{""};
 
     cv::VideoCapture capL(videoL);
     if(!capL.isOpened()){
@@ -230,8 +230,8 @@ void Demo::run(){
 #ifdef _WIN32
         // cv::Mat showImg;
         // cv::resize(imgL, showImg, cv::Size(imgL.cols / 2.0, imgL.rows / 2.0));
-        cv::imshow("showMat", showMat);
-        cv::waitKey(10);
+        // cv::imshow("showMat", showMat);
+        // cv::waitKey(10);
 #endif
 
         if(!outputPath.empty()){

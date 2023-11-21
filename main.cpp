@@ -157,19 +157,96 @@ void runDemo(){
     demo.run();
 }
 
+void test_video(){
+    std::string outputDir{"./example/"};
+    std::string outputL = outputDir + "videoL.mp4";
+    std::string outputR = outputDir + "videoR.mp4";
+
+    cv::VideoWriter writerL;
+    cv::VideoWriter writerR;
+
+    cv::VideoCapture capL(0);
+    if(!capL.isOpened()){
+        printf("cv::VideoCapture open fail!(%d)\n", 0);
+        return;
+    }
+
+    cv::VideoCapture capR(1);
+    if(!capR.isOpened()){
+        printf("cv::VideoCapture open fail!(%d)\n", 1);
+        return;
+    }
+
+    int frameWL = capL.get(cv::CAP_PROP_FRAME_WIDTH);
+    int frameHL = capL.get(cv::CAP_PROP_FRAME_HEIGHT);
+    // int fpsL = int(capL.get(cv::CAP_PROP_FPS));
+    int fpsL = 15;
+
+    if(!outputL.empty()){
+        writerL.open(outputL, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fpsL, cv::Size(frameWL, frameHL));
+        if(!writerL.isOpened()){
+            printf("writerL open fail!\n");
+            return;
+        }
+    }
+
+    int frameWR = capR.get(cv::CAP_PROP_FRAME_WIDTH);
+    int frameHR = capR.get(cv::CAP_PROP_FRAME_HEIGHT);
+    // int fpsR = int(capR.get(cv::CAP_PROP_FPS));
+    int fpsR = 15;
+
+    if(!outputR.empty()){
+        writerR.open(outputR, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fpsR, cv::Size(frameWR, frameHR));
+        if(!writerR.isOpened()){
+            printf("writerR open fail!\n");
+            return;
+        }
+    }
+
+    cv::Mat frameL, frameR;
+    while(true){
+        
+        capL >> frameL;
+        capR >> frameR;
+        if(frameL.empty() || frameR.empty()) break;
+
+        if(!outputL.empty()) writerL << frameL;
+        if(!outputR.empty()) writerR << frameR;
+
+        cv::imshow("frameL", frameL);
+        cv::imshow("frameR", frameR);
+        int key = cv::waitKey(30);
+        if(key == 'q') break;
+    }
+
+    if(!outputL.empty()) writerL.release();
+    if(!outputR.empty()) writerR.release();
+
+    capL.release();
+    capR.release();
+}
+
 void test_monoCalib();
 void test_stereoCalib();
+void test_QuickCalib();
+void test_CalibSys();
 
 int main(int, char**){
     std::cout << "Hello, from StereoCalib!\n";
 
     // test_StereoCalib();
 
-    runDemo();
+    // runDemo();
 
     // test_monoCalib();
 
     // test_stereoCalib();
+
+    // test_QuickCalib();
+
+    test_CalibSys();
+
+    // test_video();
 
     return 0;
 }

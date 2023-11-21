@@ -5,6 +5,7 @@ include(CTest)
 enable_testing()
 
 set(CMAKE_BUILD_TYPE Debug)
+
 set(EXECUTABLE_OUTPUT_PATH ../output/)
 
 if(CMAKE_HOST_WIN32)
@@ -53,13 +54,24 @@ set(SRC_QNN
     QNN/AIDetector/AIDMSMTFace.cpp
     QNN/AIDetector/AIDMSMTYolox.cpp)
 
+set(SRC_Player 
+    Player/Player.cpp
+    Player/Controller.cpp)
+
+set(SRC_Collector
+    Collector/Collector.cpp)
+
+set(SRC_CalibSys
+    CalibSys/CalibSys.cpp)
+
 set(SRC_Utils
     monoCalib.cpp
-    stereoCalib.cpp)
+    stereoCalib.cpp
+    QuickCalib.cpp)
 
 
 set(LIB_LIST ${OpenCV_LIBS} ${NCNN_LIBS})
-set(SRC_LIST main.cpp ${SRC_Demo} ${SRC_StereoCalib} ${SRC_QCamCalib} ${SRC_QNN} ${SRC_Utils})
+set(SRC_LIST main.cpp ${SRC_Demo} ${SRC_StereoCalib} ${SRC_QCamCalib} ${SRC_QNN} ${SRC_Player} ${SRC_Collector} ${SRC_CalibSys} ${SRC_Utils})
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${LIB_LIST})

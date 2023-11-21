@@ -15,6 +15,7 @@ bool QCamCalib::findChessboardCorners(cv::Mat srcImg, std::vector<cv::Point2f>& 
     
     cv::Mat grayImg;
     cv::cvtColor(srcImg, grayImg, cv::COLOR_BGR2GRAY);
+    cv::resize(grayImg, grayImg, cv::Size(), this->_config.scale, this->_config.scale);
 
     cv::Size patternSize = this->_config.patternSize;
     //CALIB_CB_FAST_CHECK saves a lot of time on images
@@ -50,6 +51,8 @@ bool QCamCalib::calibrateCamera(const std::vector<std::vector<cv::Point2f>>& ima
     }
     
     cv::Size imageSize = this->_config.srcImgSize;
+    imageSize.width *= this->_config.scale;
+    imageSize.height *= this->_config.scale;
     // cv::Mat cameraMatrix;
     // cv::Mat distCoeffs;
     std::vector<cv::Vec3d> rvecs;

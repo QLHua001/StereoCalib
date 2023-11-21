@@ -15,12 +15,14 @@ public:
         cv::Size patternSize;
         cv::Size squareSize;
         cv::Size srcImgSize;
+        double scale{1.0};
 
         Config& operator=(const Config& config){
             this->camType = config.camType;
             this->patternSize = config.patternSize;
             this->squareSize = config.squareSize;
             this->srcImgSize = config.srcImgSize;
+            this->scale = config.scale;
             return *this;
         }
     };

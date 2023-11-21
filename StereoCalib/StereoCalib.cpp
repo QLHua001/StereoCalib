@@ -1,7 +1,7 @@
 #include <opencv2/ximgproc.hpp>
 #include "StereoCalib.h"
 
-StereoCalib::StereoCalib(){
+StereoCalib::StereoCalib(cv::Size imageSize, double scale, cv::Size patternSize, cv::Size squareSize){
 
     std::cout << "new StereoCalib" << std::endl;
 
@@ -23,25 +23,27 @@ StereoCalib::StereoCalib(){
 
     // this->_T = (cv::Mat_<double>(3, 1) << 6.7222911495930981e+00, -3.5220917208478736e-01,
     //    2.4511341222549290e-01 );
+    this->_scale = scale;
+    this->_patternSize = patternSize;
+    this->_squareSize = squareSize;
+    this->_imageSize = cv::Size(imageSize.width * this->_scale, imageSize.height * this->_scale);
 
-    this->_imageSize = cv::Size(1920 * this->_scale, 1080 * this->_scale);
+    // int minDisparity = 0;
+    // int numDisparities = 160;
+    // int blockSize = 5;
+    // this->_sgbm = cv::StereoSGBM::create(minDisparity, numDisparities, blockSize);
 
-    int minDisparity = 0;
-    int numDisparities = 160;
-    int blockSize = 5;
-    this->_sgbm = cv::StereoSGBM::create(minDisparity, numDisparities, blockSize);
-
-    int P1 = 8 * 3 * blockSize * blockSize;
-    int P2 = 32 * 3 * blockSize * blockSize;
-    this->_sgbm->setP1(P1);
-    this->_sgbm->setP2(P2);
-    this->_sgbm->setPreFilterCap(10);
-	this->_sgbm->setUniquenessRatio(10);
-	this->_sgbm->setSpeckleRange(2);
-	this->_sgbm->setSpeckleWindowSize(50);
-	this->_sgbm->setDisp12MaxDiff(2);
-    //this->_sgbm->setNumDisparities(1);
-	this->_sgbm->setMode(cv::StereoSGBM::MODE_SGBM_3WAY);
+    // int P1 = 8 * 3 * blockSize * blockSize;
+    // int P2 = 32 * 3 * blockSize * blockSize;
+    // this->_sgbm->setP1(P1);
+    // this->_sgbm->setP2(P2);
+    // this->_sgbm->setPreFilterCap(10);
+	// this->_sgbm->setUniquenessRatio(10);
+	// this->_sgbm->setSpeckleRange(2);
+	// this->_sgbm->setSpeckleWindowSize(50);
+	// this->_sgbm->setDisp12MaxDiff(2);
+    // //this->_sgbm->setNumDisparities(1);
+	// this->_sgbm->setMode(cv::StereoSGBM::MODE_SGBM_3WAY);
 
 }
 
@@ -78,8 +80,8 @@ void StereoCalib::setIntrisicsR(cv::Mat cameraMatrix, cv::Mat distCoeffs){
 
 void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, const std::vector<std::string>& imgRPathList){
 
-    cv::Size patternSize(8, 5);
-    cv::Size squareSize(30, 30); // mm 
+    cv::Size patternSize = this->_patternSize;
+    cv::Size squareSize = this->_squareSize; // mm 
 
     std::vector<std::vector<cv::Point2f>> imagePointsL;
     std::vector<std::vector<cv::Point2f>> imagePointsR;
@@ -145,16 +147,16 @@ void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, 
     cv::Mat cameraMatrixR = this->_cameraMatrixR.clone();
     cv::Mat distCoeffR = this->_distCoeffR.clone();
     double err = cv::stereoCalibrate(objectPoints, imagePointsL, imagePointsR,
-                                    this->_cameraMatrixL, this->_distCoeffL,
-                                    this->_cameraMatrixR, this->_distCoeffR,
+                                    cameraMatrixL, distCoeffL,
+                                    cameraMatrixR, distCoeffR,
                                     this->_imageSize,
                                     this->_R, this->_T, this->_E, this->_F,
                                     cv::CALIB_USE_INTRINSIC_GUESS,
                                     cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 100, 1e-5));
-    std::cout << "ML: " << std::endl << this->_cameraMatrixL << std::endl;
-    std::cout << "DL: " << std::endl << this->_distCoeffL << std::endl;
-    std::cout << "MR: " << std::endl << this->_cameraMatrixR << std::endl;
-    std::cout << "DR: " << std::endl << this->_distCoeffR << std::endl;
+    std::cout << "ML: " << std::endl << cameraMatrixL << std::endl;
+    std::cout << "DL: " << std::endl << distCoeffL << std::endl;
+    std::cout << "MR: " << std::endl << cameraMatrixR << std::endl;
+    std::cout << "DR: " << std::endl << distCoeffR << std::endl;
     std::cout << "R: " << std::endl << this->_R << std::endl;
     std::cout << "T: " << std::endl << this->_T << std::endl;
 
@@ -167,7 +169,7 @@ void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, 
     cv::Mat_<double> P2;
     // cv::Mat_<double> Q;
     
-    cv::stereoRectify(this->_cameraMatrixL, this->_distCoeffL, this->_cameraMatrixR, this->_distCoeffR,
+    cv::stereoRectify(cameraMatrixL, distCoeffL, cameraMatrixR, distCoeffR,
                     this->_imageSize, this->_R, this->_T, 
                     R1, R2, P1, P2, this->_Q,
                     cv::CALIB_ZERO_DISPARITY,
@@ -181,15 +183,15 @@ void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, 
     
     // cv::Mat mapXL, mapYL;
     // cv::Mat mapXR, mapYR;
-    cv::initUndistortRectifyMap(this->_cameraMatrixL, this->_distCoeffL, R1, P1, this->_imageSize, CV_32FC1, this->_mapXL, this->_mapYL);
-    cv::initUndistortRectifyMap(this->_cameraMatrixR, this->_distCoeffR, R2, P2, this->_imageSize, CV_32FC1, this->_mapXR, this->_mapYR);
+    cv::initUndistortRectifyMap(cameraMatrixL, distCoeffL, R1, P1, this->_imageSize, CV_32FC1, this->_mapXL, this->_mapYL);
+    cv::initUndistortRectifyMap(cameraMatrixR, distCoeffR, R2, P2, this->_imageSize, CV_32FC1, this->_mapXR, this->_mapYR);
 
     cv::FileStorage calibParamYml("./config/calibParam.yml", cv::FileStorage::WRITE);
 
-    calibParamYml.write("M1", cameraMatrixL);
-    calibParamYml.write("D1", distCoeffL);
-    calibParamYml.write("M2", cameraMatrixR);
-    calibParamYml.write("D2", distCoeffR);
+    calibParamYml.write("M1", this->_cameraMatrixL);
+    calibParamYml.write("D1", this->_distCoeffL);
+    calibParamYml.write("M2", this->_cameraMatrixR);
+    calibParamYml.write("D2", this->_distCoeffR);
     calibParamYml.write("R", this->_R);
     calibParamYml.write("T", this->_T);
     calibParamYml.write("R1", R1);
@@ -203,6 +205,72 @@ void StereoCalib::stereoCalibrate(const std::vector<std::string>& imgLPathList, 
     calibParamYml.write("mapYR", this->_mapYR);
 
     calibParamYml.release();
+}
+
+void StereoCalib::stereoCalibrate(std::vector<std::vector<cv::Point2f>>& imagePointsL, std::vector<std::vector<cv::Point2f>>& imagePointsR){
+
+    cv::Size patternSize = this->_patternSize;
+    cv::Size squareSize = this->_squareSize; // mm 
+
+    int success = imagePointsL.size();
+    // objectPoints
+    std::vector<std::vector<cv::Point3f>> objectPoints;
+    for(int i = 0; i < success; i++){
+        std::vector<cv::Point3f> corners;
+        for(int row = 0; row < patternSize.height; row++){
+            for(int col = 0; col < patternSize.width; col++){
+                corners.push_back(cv::Point3f(col * squareSize.width, row * squareSize.height, 0.0f));
+            }
+        }
+        objectPoints.push_back(corners);
+    }
+
+    std::cout << "Start stereoCalibrate..." << std::endl;
+
+    cv::Mat cameraMatrixL = this->_cameraMatrixL.clone();
+    cv::Mat distCoeffL = this->_distCoeffL.clone();
+    cv::Mat cameraMatrixR = this->_cameraMatrixR.clone();
+    cv::Mat distCoeffR = this->_distCoeffR.clone();
+    double err = cv::stereoCalibrate(objectPoints, imagePointsL, imagePointsR,
+                                    cameraMatrixL, distCoeffL,
+                                    cameraMatrixR, distCoeffR,
+                                    this->_imageSize,
+                                    this->_R, this->_T, this->_E, this->_F,
+                                    cv::CALIB_USE_INTRINSIC_GUESS,
+                                    cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 100, 1e-5));
+    std::cout << "ML: " << std::endl << cameraMatrixL << std::endl;
+    std::cout << "DL: " << std::endl << distCoeffL << std::endl;
+    std::cout << "MR: " << std::endl << cameraMatrixR << std::endl;
+    std::cout << "DR: " << std::endl << distCoeffR << std::endl;
+    std::cout << "R: " << std::endl << this->_R << std::endl;
+    std::cout << "T: " << std::endl << this->_T << std::endl;
+
+
+    std::cout << "The err = " << err << std::endl;
+
+    cv::Mat_<double> R1;
+    cv::Mat_<double> R2;
+    cv::Mat_<double> P1;
+    cv::Mat_<double> P2;
+    // cv::Mat_<double> Q;
+    
+    cv::stereoRectify(cameraMatrixL, distCoeffL, cameraMatrixR, distCoeffR,
+                    this->_imageSize, this->_R, this->_T, 
+                    R1, R2, P1, P2, this->_Q,
+                    cv::CALIB_ZERO_DISPARITY,
+                    -1,
+                    this->_imageSize, &this->_validRoi[0], &this->_validRoi[1]);
+    std::cout << "R1: " << std::endl << R1 << std::endl;
+    std::cout << "R2: " << std::endl << R2 << std::endl;
+    std::cout << "P1: " << std::endl << P1 << std::endl;
+    std::cout << "P2: " << std::endl << P2 << std::endl;
+    std::cout << "Q: " << std::endl << this->_Q << std::endl;
+    
+    // cv::Mat mapXL, mapYL;
+    // cv::Mat mapXR, mapYR;
+    cv::initUndistortRectifyMap(cameraMatrixL, distCoeffL, R1, P1, this->_imageSize, CV_32FC1, this->_mapXL, this->_mapYL);
+    cv::initUndistortRectifyMap(cameraMatrixR, distCoeffR, R2, P2, this->_imageSize, CV_32FC1, this->_mapXR, this->_mapYR);
+
 }
 
 void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectifyImageL, cv::Mat& rectifyImageR){
@@ -237,13 +305,13 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
     // cv::imwrite("./temp/showLandmarkL.jpg", showLandmarkL);
     // cv::imwrite("./temp/showLandmarkR.jpg", showLandmarkR);
 
-    cv::Mat disp, disp8, dispColor;
-    this->_sgbm->compute(rectifyImageL, rectifyImageR, disp);
-    disp8 = cv::Mat(disp.rows, disp.cols, CV_8UC1);
-    cv::normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-    cv::applyColorMap(disp8, filteredDisparityColorMap, cv::COLORMAP_JET);
-    cv::reprojectImageTo3D(disp, xyz, this->_Q, true);
-    xyz = xyz * 16;
+    // cv::Mat disp, disp8, dispColor;
+    // this->_sgbm->compute(rectifyImageL, rectifyImageR, disp);
+    // disp8 = cv::Mat(disp.rows, disp.cols, CV_8UC1);
+    // cv::normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+    // cv::applyColorMap(disp8, filteredDisparityColorMap, cv::COLORMAP_JET);
+    // cv::reprojectImageTo3D(disp, xyz, this->_Q, true);
+    // xyz = xyz * 16;
     // cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
     
 
@@ -281,6 +349,28 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
     //     std::cout << "dist3: " << "x: " << x << ", y: " << y << ", z: " << z << std::endl;
     // }
     //############################### 20231113 #######################################
+}
+
+void StereoCalib::saveParams(const std::string& path){
+    cv::FileStorage calibParamYml(path, cv::FileStorage::WRITE);
+
+    calibParamYml.write("M1", this->_cameraMatrixL);
+    calibParamYml.write("D1", this->_distCoeffL);
+    calibParamYml.write("M2", this->_cameraMatrixR);
+    calibParamYml.write("D2", this->_distCoeffR);
+    calibParamYml.write("R", this->_R);
+    calibParamYml.write("T", this->_T);
+    // calibParamYml.write("R1", R1);
+    // calibParamYml.write("R2", R2);
+    // calibParamYml.write("P1", P1);
+    // calibParamYml.write("P2", P2);
+    calibParamYml.write("Q", this->_Q);
+    calibParamYml.write("mapXL", this->_mapXL);
+    calibParamYml.write("mapYL", this->_mapYL);
+    calibParamYml.write("mapXR", this->_mapXR);
+    calibParamYml.write("mapYR", this->_mapYR);
+
+    calibParamYml.release();
 }
 
 // void StereoCalib::projectPoint(const std::vector<cv::Point3f>& worldPts, std::vector<cv::Point2f>& imagePts){
