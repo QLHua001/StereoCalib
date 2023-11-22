@@ -70,6 +70,17 @@ Demo::Demo(std::vector<int>& cameraId, bool isOverolad){
     this->_AiDMSMTFace = new AIDMSMTFace;
     this->_AiDMSMTFace->init();
 
+    QCamCalib::Config camCalibConfig;
+    camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
+    camCalibConfig.patternSize = cv::Size(8, 5);
+    camCalibConfig.squareSize = cv::Size(30, 30);
+    camCalibConfig.srcImgSize = this->_cameraUnifiedSize;
+    camCalibConfig.scale = 0.5;
+    if(!this->_camCalib.init(camCalibConfig)){
+        printf("Demo::QCamCalib init fail!\n");
+    }
+    printf("Demo::QCamCalib init successfully!\n");
+
     std::string calibParamYmlPath{"./config/Params.yml"};
     bool ret;
 #ifdef __linux__
@@ -83,19 +94,6 @@ Demo::Demo(std::vector<int>& cameraId, bool isOverolad){
         this->_stereoCalib.loadParams(calibParamYmlPath);
 
     }else{
-        // QCamCalib::Config camCalibConfig;
-        // camCalibConfig.camType = QCamCalib::CamType::CAM_GENERAL;
-        // camCalibConfig.patternSize = cv::Size(8, 5);
-        // camCalibConfig.squareSize = cv::Size(30, 30);
-        // camCalibConfig.srcImgSize = cv::Size(1920 * this->_scale, 1080 * this->_scale);
-        // if(!this->_camCalib.init(camCalibConfig)){
-        //     printf("QCamCalib init fail!\n");
-        // }
-        // printf("QCamCalib init successfully!\n");
-
-        // this->calibrate();
-
-        //########################################################################################
 
         // std::vector<int> cameras{0, 1};
         CalibSys calibSys(CalibSys::InputType::TYPE_CAMERA, cameraId, this->_cameraUnifiedSize);
@@ -349,6 +347,7 @@ void Demo::run(cv::Mat imgL, cv::Mat imgR){
 
     this->detectLandmark(rectifyImageL, this->_landmarksL);
     this->detectLandmark(rectifyImageR, this->_landmarksR);
+
     if(!(this->_landmarksL.empty()) && !(this->_landmarksR.empty())) {
 
         cv::Mat filteredDisparityColorMap;
@@ -441,10 +440,26 @@ void Demo::run(cv::Mat imgL, cv::Mat imgR){
         // cv::imwrite("./temp/showMat.jpg", showMat);
     }
 
+    // // findChessboardCorners
+    // std::vector<cv::Point2f> cornerL;
+    // std::vector<cv::Point2f> cornerR;
+    // std::vector<cv::Point3f> worldPts;
+    // this->_camCalib.findChessboardCorners(rectifyImageL, cornerL);
+    // this->_camCalib.findChessboardCorners(rectifyImageR, cornerR);
+    // if(!cornerL.empty() && !cornerR.empty()){
+    //     this->_stereoCalib.stereoSGBM_chessboard(cornerL, cornerR, worldPts);
+    //     double gridSize = getDistance(worldPts[0], worldPts[1]);
+    //     std::cout << "gridSize: " << gridSize << std::endl;
+    //     cv::drawChessboardCorners(rectifyImageL, cv::Size(8, 5), cornerL, true);
+    //     cv::drawChessboardCorners(rectifyImageR, cv::Size(8, 5), cornerR, true);
+    // }
+    // cv::imshow("rectifyImageL_chessboard", rectifyImageL);
+    // cv::imshow("rectifyImageR_chessboard", rectifyImageR);
+
 #ifdef _WIN32
         cv::resize(showMat, showMat, cv::Size(), 0.5, 0.5);
         cv::imshow("showMat", showMat);
-        cv::waitKey(10);
+        cv::waitKey(5);
 #endif
 
 }

@@ -13,8 +13,11 @@ bool QCamCalib::findChessboardCorners(cv::Mat srcImg, std::vector<cv::Point2f>& 
         return false;
     }
     
-    cv::Mat grayImg;
-    cv::cvtColor(srcImg, grayImg, cv::COLOR_BGR2GRAY);
+    cv::Mat grayImg = srcImg;
+    int channels = grayImg.channels();
+    if(channels == 3){
+        cv::cvtColor(srcImg, grayImg, cv::COLOR_BGR2GRAY);
+    }
     cv::resize(grayImg, grayImg, cv::Size(), this->_config.scale, this->_config.scale);
 
     cv::Size patternSize = this->_config.patternSize;

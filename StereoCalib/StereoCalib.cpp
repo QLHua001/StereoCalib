@@ -289,7 +289,9 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
     // cv::rectangle(rectifyImageR, this->_validRoi[1], cv::Scalar(255), 2);
 
 //     // 校验
-//     cv::Size showSize(this->_imageSize.width / 2.0 * 2, this->_imageSize.height / 2.0);
+//     int displayWidth = rectifyImageL.cols;
+//     int displayHeight = rectifyImageL.rows;
+//     cv::Size showSize(displayWidth * 2, displayHeight);
 //     cv::Mat showRectifyImg = cv::Mat::zeros(showSize, CV_8UC1);
 //     rectifyImageL.copyTo(showRectifyImg(cv::Rect(0, 0, showSize.width / 2.0, showSize.height)));
 //     rectifyImageR.copyTo(showRectifyImg(cv::Rect(showSize.width / 2.0, 0, showSize.width / 2.0, showSize.height)));
@@ -304,23 +306,34 @@ void StereoCalib::stereoRectify(cv::Mat imageL, cv::Mat imageR, cv::Mat& rectify
 
 void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, std::vector<cv::Point2f>& landmarkL, std::vector<cv::Point2f>& landmarkR, cv::Mat& filteredDisparityColorMap, cv::Mat& xyz, std::vector<cv::Point3f>& worldPts){
 
-    // cv::Mat showLandmarkL = rectifyImageL.clone();
-    // cv::Mat showLandmarkR = rectifyImageR.clone();
-    // for(int i = 0; i < landmarkL.size(); i++){
-    //     cv::circle(showLandmarkL, landmarkL[i], 1, cv::Scalar(255), -1);
-    //     cv::circle(showLandmarkR, landmarkR[i], 1, cv::Scalar(255), -1);
-    // }
-    // cv::imwrite("./temp/showLandmarkL.jpg", showLandmarkL);
-    // cv::imwrite("./temp/showLandmarkR.jpg", showLandmarkR);
+//     cv::Mat showLandmarkL = rectifyImageL.clone();
+//     cv::Mat showLandmarkR = rectifyImageR.clone();
+//     for(int i = 0; i < landmarkL.size(); i++){
+//         cv::circle(showLandmarkL, landmarkL[i], 1, cv::Scalar(255), -1);
+//         cv::circle(showLandmarkR, landmarkR[i], 1, cv::Scalar(255), -1);
+//     }
+// #ifdef _WIN32
+//     cv::imshow("showLandmarkL", showLandmarkL);
+//     cv::imshow("showLandmarkR", showLandmarkR);
+// #elif __linux__
+//     cv::imwrite("./temp/showLandmarkL.jpg", showLandmarkL);
+//     cv::imwrite("./temp/showLandmarkR.jpg", showLandmarkR);
+// #endif
 
-    // cv::Mat disp, disp8, dispColor;
-    // this->_sgbm->compute(rectifyImageL, rectifyImageR, disp);
-    // disp8 = cv::Mat(disp.rows, disp.cols, CV_8UC1);
-    // cv::normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-    // cv::applyColorMap(disp8, filteredDisparityColorMap, cv::COLORMAP_JET);
-    // cv::reprojectImageTo3D(disp, xyz, this->_Q, true);
-    // xyz = xyz * 16;
-    // cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
+//     cv::Mat disp, disp8, dispColor;
+//     this->_sgbm->compute(rectifyImageL, rectifyImageR, disp);
+//     disp8 = cv::Mat(disp.rows, disp.cols, CV_8UC1);
+//     cv::normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+//     // cv::applyColorMap(disp8, filteredDisparityColorMap, cv::COLORMAP_JET);
+//     // cv::reprojectImageTo3D(disp, xyz, this->_Q, true);
+//     // xyz = xyz * 16;
+// #ifdef _WIN32
+//     // cv::imshow("filteredDisparityColorMap", filteredDisparityColorMap);
+//     cv::imshow("disp8", disp8);
+//     cv::waitKey(1);
+// #elif __linux__
+//     cv::imwrite("./temp/filteredDisparityColorMap.jpg", filteredDisparityColorMap);
+// #endif
     
 
     std::vector<int> index{6, 10, 14, 15, 17};
@@ -357,6 +370,15 @@ void StereoCalib::stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyI
     //     std::cout << "dist3: " << "x: " << x << ", y: " << y << ", z: " << z << std::endl;
     // }
     //############################### 20231113 #######################################
+}
+
+void StereoCalib::stereoSGBM_chessboard(const std::vector<cv::Point2f>& cornerL, const std::vector<cv::Point2f>& cornerR, std::vector<cv::Point3f>& worldPts){
+
+    for(int i = 0; i < cornerL.size(); i++){
+        cv::Point3f pt1(cornerL[i].x, cornerL[i].y, abs(cornerL[i].x - cornerR[i].x));
+        cv::Point3f out = this->calculateDistance(pt1);
+        worldPts.push_back(out);
+    }
 }
 
 void StereoCalib::saveParams(const std::string& path){

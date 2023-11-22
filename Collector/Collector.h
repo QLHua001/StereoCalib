@@ -30,9 +30,9 @@ private:
     std::chrono::steady_clock::time_point _startTime;
     std::chrono::steady_clock::time_point _currTime;
 
-    double _timeInterval1{5}; // seconds
-    double _timeInterval2{7}; // seconds
-    double _timeInterval3{9}; // seconds
+    double _timeInterval1{3}; // seconds
+    double _timeInterval2{5}; // seconds
+    double _timeInterval3{7}; // seconds
 
     int _sampleNum{25};
     int _count;

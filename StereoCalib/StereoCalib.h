@@ -16,6 +16,7 @@ public:
 
     void stereoRectify(const cv::Mat imageL, const cv::Mat imageR, cv::Mat& rectifyImageL, cv::Mat& rectifyImageR);
     void stereoSGBM(const cv::Mat rectifyImageL, const cv::Mat rectifyImageR, std::vector<cv::Point2f>& landmarkL, std::vector<cv::Point2f>& landmarkR, cv::Mat& filteredDisparityColorMap, cv::Mat& xyz, std::vector<cv::Point3f>& worldPts);
+    void stereoSGBM_chessboard(const std::vector<cv::Point2f>& cornerL, const std::vector<cv::Point2f>& cornerR, std::vector<cv::Point3f>& worldPts);
     // void projectPoint(const std::vector<cv::Point3f>& worldPts, std::vector<cv::Point2f>& imagePts);
 
     void saveParams(const std::string& path);
